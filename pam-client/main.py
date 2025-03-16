@@ -2,16 +2,34 @@
 # -*- coding: utf-8 -*-
 import json
 import urllib2
+import ssl
 
-
-# Función simple para llamar al endpoint del servidor de autenticación.
+# Función para llamar al endpoint del servidor de autenticación usando un certificado cliente.
 def authenticate(serial_id, username):
-    base_url = "http://localhost:8888"  # ajustar según sea necesario
+    base_url = "https://localhost:8888"  # cambiado a HTTPS
     url = base_url + "/api/v1/certificate/" + serial_id + "/validate?username=" + username
+    
     try:
-        response = urllib2.urlopen(url)
+        # Configurar el contexto SSL con los certificados
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        
+        # Cargar certificado y llave del cliente
+        ctx.load_cert_chain(
+            certfile='client.crt',  # Ruta al certificado del cliente
+            keyfile='client.key'    # Ruta a la llave privada del cliente
+        )
+        
+        # Verificación del certificado del servidor (opcional, pero recomendado)
+        ctx.load_verify_locations('/etc/pam_python/ca.crt')  # Ruta al certificado CA
+        
+        # Crear solicitud HTTPS
+        request = urllib2.Request(url)
+        
+        # Abrir la conexión con el contexto SSL
+        response = urllib2.urlopen(request, context=ctx)
         code = response.getcode()
         content = response.read()
+        
     except urllib2.URLError as e:
         print("Error llamando al endpoint para serial: %s" % serial_id)
         print(str(e))
@@ -133,5 +151,5 @@ def pam_sm_chauthtok(pamh, flags, argv):
 
 if __name__ == "__main__":
     # Prueba simple de la llamada al servidor de autenticación
-    result = authenticate("1eb97febf0e01bb7f1891cbd837087af3064740b")
+    result = authenticate("1eb97febf0e01bb7f1891cbd837087af3064740b", "test_user")
     print("Resultado de autenticación: %s" % result)
