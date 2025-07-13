@@ -43,10 +43,11 @@ workspace "PKI con Uso de Certificados x509 para autenticar usuarios en servidor
                 group "Capa de Dominio" {
                     dominio_certificados = component "Dominio de Certificados" "Lógica de negocio para certificados y validaciones" "Python"
                     gestion_claves = component "Gestión de Claves" "Manejo y conversión de claves criptográficas" "Python/OpenSSL"
+                    repositorio_certificados = component "Repositorio de Certificados" "Interfaz de acceso a datos de certificados y validación de estado" "Python Abstract Class"
                 }
     
                 group "Capa de Infraestructura" {
-                    repositorio_certificados = component "Repositorio de Certificados" "Acceso a datos de certificados y validación de estado" "Python + EJBCA REST API"
+                    repositorio_certificados_impl = component "Implementacion Repositorio de Certificados" "Implementa el repositorio en sí" "Python + EJBCA REST API"
                     parseador_certificados = component "Parser de Certificados" "Procesamiento de certificados X.509" "pyOpenSSL library"
                     configuracion = component "Configuración" "Manejo de configuración del sistema" "Python / YAML"
                 }
@@ -58,14 +59,14 @@ workspace "PKI con Uso de Certificados x509 para autenticar usuarios en servidor
                 # Relaciones del dominio con infraestructura
                 orquestador_autenticacion -> repositorio_certificados "consulta estado de certificados"
                 orquestador_autenticacion -> repositorio_certificados "obtiene certificado X.509 completo"
-                repositorio_certificados -> parseador_certificados "solicita decodificación de certificados"
+                repositorio_certificados -> repositorio_certificados_impl "Delega implementación"
+                repositorio_certificados_impl -> parseador_certificados "solicita decodificación de certificados"
     
-                # Gestión de claves
-                gestion_claves -> parseador_certificados "obtiene claves públicas"
+                
     
                 # Configuración
                 api_rest -> configuracion "obtiene configuración"
-                repositorio_certificados -> configuracion "obtiene llaves y acceso necesarios para comunicarse EJBCA REST API"
+                repositorio_certificados_impl -> configuracion "obtiene llaves y acceso necesarios para comunicarse EJBCA REST API"
             }
             nginx -> api_rest "Redirije solicitud" "HTTP request"
         }
@@ -92,8 +93,8 @@ workspace "PKI con Uso de Certificados x509 para autenticar usuarios en servidor
         destino_container -> nginx "Valida que certificado no este expirado ni revocado" "HTTPS with MTLS"
         destino_container -> userHost "Acceso a servidor destino" "SSH"
         // Interacion externa auth-service
-        repositorio_certificados -> ejbca_rest_api "Consulta estado de revocacion"
-        repositorio_certificados -> ejbca_rest_api "Obtiene certificado"
+        repositorio_certificados_impl -> ejbca_rest_api "Consulta estado de revocacion" "HTTPs Request"
+        repositorio_certificados_impl -> ejbca "Obtiene certificado" "HTTPs Request"
     }
 
     views {
@@ -113,7 +114,7 @@ workspace "PKI con Uso de Certificados x509 para autenticar usuarios en servidor
         }
         component auth_service {
             include *
-            autoLayout tb
+            autoLayout lr
         }
         component destino_container {
             include *
@@ -126,7 +127,41 @@ workspace "PKI con Uso de Certificados x509 para autenticar usuarios en servidor
         }
         container userHost {
             include *
-            autoLayout lr
+        }
+        
+        dynamic auth_service "AuthenticationFlow" "Flujo de autenticación de certificados X.509" {
+            title "Flujo de validación de certificado en el servicio de autenticación"
+            // autoLayout lr
+    
+            # 1. Llegada de la solicitud desde PAM
+            nginx -> api_rest "Redirije solicitud de validación de certificado"
+    
+            # 2. Controller procesa solicitud
+            api_rest -> orquestador_autenticacion "Delega validación del certificado"
+    
+            # 3. Verificar si certificado está revocado
+            orquestador_autenticacion -> repositorio_certificados "Verificar estado de revocación"
+            repositorio_certificados -> repositorio_certificados_impl "Obtención del certificado completo"
+            repositorio_certificados_impl -> ejbca_rest_api "Consultar estado de revocacion"
+    
+            # 4. Obtener certificado completo
+            orquestador_autenticacion -> repositorio_certificados "Obtener datos del certificado"
+            repositorio_certificados -> repositorio_certificados_impl "Obtener datos del certificado"
+            repositorio_certificados_impl -> ejbca_rest_api "Buscar certificado"
+            repositorio_certificados_impl -> parseador_certificados "Decodificar certificado X.509"
+    
+            # 5. Validar certificado en dominio
+            orquestador_autenticacion -> dominio_certificados "Verificar vigencia"
+    
+            # 6. Verificar roles/permisos
+            dominio_certificados -> orquestador_autenticacion "Usuario autenticado"
+    
+            # 7. Generar authorized_keys entry
+            orquestador_autenticacion -> gestion_claves "Generar entrada para authorized_keys"
+    
+            # 8. Respuesta exitosa
+            orquestador_autenticacion -> api_rest "Autenticación exitosa con clave SSH"
+            api_rest -> nginx "Respuesta HTTP con json apropiado"
         }
         theme default
     }

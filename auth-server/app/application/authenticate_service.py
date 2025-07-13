@@ -37,23 +37,12 @@ class AuthenticateService:
         if certificate.is_expired():
             self.logger.info("Certificate is expired")
             return AuthResponse(allowed=False), None
-        self.logger.debug("Certificate role: %s",
-                          certificate.subject_components["role"])
-        self.logger.debug("Username: %s", username)
         
-        #if certificate.subject_components["role"] != username:
-            #return AuthResponse(allowed=False), None
-        roles_str = certificate.subject_components["role"]
-        roles = [role.strip() for role in roles_str.split(",")]
-        if username not in roles:
-            return AuthResponse(allowed=False), None
-        user_role = username
         try:
             authorized_keys_entry = self.authorized_keys_builder.build(
                 certificate.subject_components["emailAddress"],
                 certificate.subject_components["CN"],
-                #certificate.subject_components["role"],
-                user_role,
+                username,
                 certificate.public_key
             )
         except Exception as e:

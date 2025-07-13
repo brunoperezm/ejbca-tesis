@@ -8,3 +8,14 @@ services:
       - "8080:8080"
     volumes:
       - ./dsl:/usr/local/structurizr
+  
+  mermaid-viewer:
+    image: python:3.9-alpine
+    container_name: mermaid-viewer
+    restart: always
+    ports:
+      - "8081:8000"
+    volumes:
+      - ./level4-diagrams:/app
+    working_dir: /app
+    command: python -m http.server 8000

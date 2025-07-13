@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+
+class AuthenticateService {
+    - certificate_repository: CertificateRepository
+    - authorized_keys_builder: AuthorizedKeysBuilder
+    - logger: Logger
+    --
+    + __init__(certificate_repository, authorized_keys_builder, logger)
+    + authenticate(serial_id: str, username: str): Tuple[AuthResponse, dict]
+}
+
+interface CertificateRepository {
+    + is_revoked(serial_id: str): Tuple[bool, dict]
+    + get_certificate(serial_id: str): Tuple[Certificate, dict]
+}
+
+class AuthorizedKeysBuilder {
+    --
+    + __init__()
+    + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
+}
+
+AuthenticateService --> CertificateRepository : depends on
+AuthenticateService --> AuthorizedKeysBuilder : uses
+
+note top of AuthenticateService : Capa de Aplicación\nOrquesta el flujo de autenticación
+note right of CertificateRepository : Interfaz del Dominio\nAbstracción para acceso a datos
+note bottom of AuthorizedKeysBuilder : Servicio de Dominio\nGenera formato SSH
+
+@enduml

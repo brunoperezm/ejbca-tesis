@@ -1,0 +1,42 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+
+class Certificate {
+    - serial_id: SerialNumber
+    - public_key: X509PublicKey  
+    - expiry_date: datetime
+    - subject_components: dict[str, str]
+    --
+    + __init__(serial_id, public_key, expiry_date, subject_components)
+    + is_expired(now: datetime): bool
+}
+
+class SerialNumber {
+    - serial_number: int
+    --
+    + __init__(serial_number: int)
+    + to_hex_uppercase(): str
+}
+
+class X509PublicKey {
+    - pem_key: str
+    --
+    + __init__(pem_key: str)
+    + to_ssh_public_key(): str
+}
+
+class AuthorizedKeysBuilder {
+    --
+    + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
+}
+
+Certificate *-- SerialNumber : composición
+Certificate *-- X509PublicKey : composición
+AuthorizedKeysBuilder ..> X509PublicKey : uses
+
+note top of Certificate : Entidad raíz del dominio\nEncapsula validaciones de negocio
+note right of SerialNumber : Value Object\nFormato hexadecimal para EJBCA
+note right of X509PublicKey : Value Object\nConversión PEM a SSH
+note bottom of AuthorizedKeysBuilder : Servicio de Dominio\nGenera entrada authorized_keys
+@enduml

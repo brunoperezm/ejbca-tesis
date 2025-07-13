@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantUML Viewer & PNG Exporter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .file-list {
+            margin: 20px 0;
+        }
+        .file-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .file-item:hover {
+            background: #e9ecef;
+        }
+        .file-item.selected {
+            background: #007bff;
+            color: white;
+        }
+        .preview-area {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .plantuml-content {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: none;
+        }
+        .diagram-preview {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .export-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .export-btn:hover {
+            background: #0056b3;
+        }
+        .export-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PlantUML Viewer & PNG Exporter</h1>
+        
+        <h3>Available Diagrams</h3>
+        <div class="file-list" id="fileList">
+            <div class="loading">Loading diagrams...</div>
+        </div>
+        
+        <div class="preview-area">
+            <div id="diagramContainer" style="display: none;">
+                <h3 id="diagramTitle">Diagram Preview</h3>
+                <img id="diagramPreview" class="diagram-preview" alt="Diagram preview">
+                <br>
+                <button class="export-btn" id="exportBtn" onclick="exportToPNG()">Export to PNG</button>
+                <button class="export-btn" onclick="showSource()">Show Source</button>
+            </div>
+            <textarea class="plantuml-content" id="plantUMLContent" placeholder="PlantUML content will appear here..."></textarea>
+        </div>
+        
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let currentDiagramContent = '';
+        
+        const diagramFiles = {
+            'domain.plantuml': `@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+
+class Certificate {
+    - serial_id: SerialNumber
+    - public_key: X509PublicKey  
+    - expiry_date: datetime
+    - subject_components: dict[str, str]
+    --
+    + __init__(serial_id, public_key, expiry_date, subject_components)
+    + is_expired(now: datetime): bool
+}
+
+class SerialNumber {
+    - serial_number: int
+    --
+    + __init__(serial_number: int)
+    + to_hex_uppercase(): str
+}
+
+class X509PublicKey {
+    - pem_key: str
+    --
+    + __init__(pem_key: str)
+    + to_ssh_public_key(): str
+}
+
+class AuthorizedKeysBuilder {
+    --
+    + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
+}
+
+Certificate *-- SerialNumber : composición
+Certificate *-- X509PublicKey : composición
+AuthorizedKeysBuilder ..> X509PublicKey : uses
+
+note top of Certificate : Entidad raíz del dominio\\nEncapsula validaciones de negocio
+note right of SerialNumber : Value Object\\nFormato hexadecimal para EJBCA
+note right of X509PublicKey : Value Object\\nConversión PEM a SSH
+note bottom of AuthorizedKeysBuilder : Servicio de Dominio\\nGenera entrada authorized_keys
+@enduml`
+        };
+
+        const fileList = document.getElementById('fileList');
+        const diagramContainer = document.getElementById('diagramContainer');
+        const diagramTitle = document.getElementById('diagramTitle');
+        const diagramPreview = document.getElementById('diagramPreview');
+        const plantUMLContent = document.getElementById('plantUMLContent');
+        const messages = document.getElementById('messages');
+
+        function loadDiagramList() {
+            fileList.innerHTML = '';
+            
+            Object.keys(diagramFiles).forEach(fileName => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.textContent = fileName.replace('.plantuml', '');
+                fileItem.onclick = () => selectAndRenderDiagram(fileName);
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function selectAndRenderDiagram(fileName) {
+            // Remove previous selection
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Mark current selection
+            event.target.classList.add('selected');
+            
+            selectedFile = fileName;
+            currentDiagramContent = diagramFiles[fileName];
+            
+            // Hide source, show diagram
+            plantUMLContent.style.display = 'none';
+            diagramContainer.style.display = 'block';
+            
+            diagramTitle.textContent = `${fileName.replace('.plantuml', '')} Diagram`;
+            
+            renderDiagram();
+        }
+
+        function renderDiagram() {
+            if (!currentDiagramContent) {
+                showMessage('No diagram content to render', 'error');
+                return;
+            }
+
+            showMessage('Rendering diagram...', 'success');
+            
+            // Use simple HEX encoding format
+            const hexEncoded = plantumlHexEncode(currentDiagramContent);
+            const imageUrl = `https://www.plantuml.com/plantuml/png/~h${hexEncoded}`;
+            
+            console.log(`Using PlantUML HEX URL: ${imageUrl}`);
+            
+            diagramPreview.src = imageUrl;
+            diagramPreview.onload = () => {
+                showMessage('Diagram rendered successfully', 'success');
+            };
+            diagramPreview.onerror = () => {
+                showMessage('Failed to render diagram. Please check the PlantUML syntax.', 'error');
+            };
+        }
+        
+        // HEX encoding for PlantUML with proper UTF-8 support
+        function plantumlHexEncode(plantumlSource) {
+            // First encode to UTF-8 bytes, then convert to hex
+            const utf8Bytes = new TextEncoder().encode(plantumlSource);
+            let hex = '';
+            for (let i = 0; i < utf8Bytes.length; i++) {
+                hex += utf8Bytes[i].toString(16).padStart(2, '0');
+            }
+            return hex;
+        }
+
+        function exportToPNG() {
+            if (!selectedFile || !diagramPreview.src) {
+                showMessage('Please select and render a diagram first', 'error');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = diagramPreview.naturalWidth;
+            canvas.height = diagramPreview.naturalHeight;
+            
+            ctx.drawImage(diagramPreview, 0, 0);
+            
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = selectedFile.replace('.plantuml', '.png');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(`Exported: ${a.download}`, 'success');
+            }, 'image/png');
+        }
+
+        function showSource() {
+            if (!currentDiagramContent) {
+                showMessage('No source code available', 'error');
+                return;
+            }
+            
+            plantUMLContent.value = currentDiagramContent;
+            plantUMLContent.style.display = 'block';
+            diagramContainer.style.display = 'none';
+        }
+
+        function showMessage(text, type) {
+            messages.innerHTML = `<div class="${type}">${text}</div>`;
+            setTimeout(() => {
+                messages.innerHTML = '';
+            }, 3000);
+        }
+
+
+        // Initialize the app
+        loadDiagramList();
+    </script>
+</body>
+</html>
