@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:the-lum.github.io)",
+      "WebFetch(domain:www.visual-paradigm.com)"
+    ],
+    "deny": []
+  }
+}

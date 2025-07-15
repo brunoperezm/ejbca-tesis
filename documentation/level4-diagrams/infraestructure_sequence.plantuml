@@ -1,0 +1,37 @@
+@startuml
+!theme mars
+title Flujos de la Capa de Infraestructura
+
+actor Client
+participant CertificateRepositoryImpl as Repo
+participant EJBCAClient
+participant CertificateDecoder as Decoder
+participant "EJBCA REST API" as EJBCA
+
+== Inicialización ==
+Client -> Repo: __init__(ejbca_client, decoder, issuer_dn)
+note right: Config válida es responsabilidad\ndel cliente (URLs, certificados)
+Repo -> EJBCAClient: valida configuración interna
+EJBCAClient -> EJBCAClient: verifica certificados mTLS
+
+== Verificación de Revocación ==
+Client -> Repo: is_revoked(serial_id)
+Repo -> EJBCAClient: get_revocation_status(issuer_dn, serial_id)
+EJBCAClient -> EJBCA: GET /v1/certificate/{issuer_dn}/{serial}/revocationstatus
+EJBCA --> EJBCAClient: RevocationStatus JSON
+EJBCAClient --> Repo: (RevocationStatus, None)
+Repo --> Client: (bool revoked, error)
+
+== Obtención de Certificado ==
+Client -> Repo: get_certificate(serial_id)
+Repo -> EJBCAClient: search(criteria=[serial_id])
+EJBCAClient -> EJBCA: POST /v1/certificate/search
+EJBCA --> EJBCAClient: {"certificates": [raw_cert_data]}
+EJBCAClient --> Repo: (search_response, None)
+Repo -> Decoder: from_raw(raw_certificate)
+Decoder --> Repo: Certificate object
+Repo --> Client: (Certificate, None)
+
+note over Repo, EJBCA: Todos los errores HTTP/parsing\nse encapsulan como dict de error
+
+@enduml

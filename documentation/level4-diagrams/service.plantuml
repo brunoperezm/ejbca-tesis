@@ -1,12 +1,11 @@
 @startuml
-!theme plain
-skinparam classAttributeIconSize 0
+!theme mars
 
 class AuthenticateService {
     - certificate_repository: CertificateRepository
     - authorized_keys_builder: AuthorizedKeysBuilder
     - logger: Logger
-    --
+    ====
     + __init__(certificate_repository, authorized_keys_builder, logger)
     + authenticate(serial_id: str, username: str): Tuple[AuthResponse, dict]
 }
@@ -17,16 +16,27 @@ interface CertificateRepository {
 }
 
 class AuthorizedKeysBuilder {
-    --
+    ====
     + __init__()
-    + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
+    + build(emailAddress: str, commonName: str, public_key: X509PublicKey): str
 }
 
 AuthenticateService --> CertificateRepository : depends on
 AuthenticateService --> AuthorizedKeysBuilder : uses
 
-note top of AuthenticateService : Capa de Aplicación\nOrquesta el flujo de autenticación
-note right of CertificateRepository : Interfaz del Dominio\nAbstracción para acceso a datos
-note bottom of AuthorizedKeysBuilder : Servicio de Dominio\nGenera formato SSH
+note top of AuthenticateService
+  **Capa de Aplicación**
+  Orquesta el flujo de autenticación
+end note
+
+note right of CertificateRepository
+  **Interfaz del Dominio**
+  Abstracción para acceso a datos
+end note
+
+note bottom of AuthorizedKeysBuilder
+  **Servicio de Dominio**
+  Genera formato SSH
+end note
 
 @enduml

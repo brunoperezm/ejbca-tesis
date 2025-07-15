@@ -87,6 +87,20 @@
             text-align: center;
             color: #666;
             font-style: italic;
+            padding: 20px;
+        }
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .refresh-btn:hover {
+            background: #218838;
         }
     </style>
 </head>
@@ -95,6 +109,7 @@
         <h1>PlantUML Viewer & PNG Exporter</h1>
         
         <h3>Available Diagrams</h3>
+        <button class="refresh-btn" onclick="loadDiagramList()">🔄 Refresh Diagrams</button>
         <div class="file-list" id="fileList">
             <div class="loading">Loading diagrams...</div>
         </div>
@@ -116,38 +131,104 @@
     <script>
         let selectedFile = null;
         let currentDiagramContent = '';
+        let diagramFiles = {};
         
-        const diagramFiles = {
+        // Dynamic diagram loading from server
+        async function loadDiagramsFromServer() {
+            try {
+                showMessage('Loading diagrams from server...', 'loading');
+                // Try Docker port first, fallback to local development port
+                let response;
+                try {
+                    response = await fetch('http://localhost:8082/list_diagrams');
+                } catch (dockerError) {
+                    console.log('Docker port failed, trying local development port...');
+                    response = await fetch('http://localhost:8001/list_diagrams');
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                diagramFiles = data.diagrams;
+                
+                showMessage(`Loaded ${data.count} diagrams successfully`, 'success');
+                return true;
+            } catch (error) {
+                showMessage(`Error loading diagrams: ${error.message}`, 'error');
+                console.error('Error loading diagrams:', error);
+                
+                // Fallback to empty state
+                diagramFiles = {};
+                return false;
+            }
+        }
+        
+        // Old hardcoded data (keeping as backup/reference)
+        const backupDiagramFiles = {
             'domain.plantuml': `@startuml
-!theme plain
-skinparam classAttributeIconSize 0
+!theme materia-outline
+
+<style>
+class {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+  BorderThickness 2
+  FontColor #0D47A1
+  FontSize 12
+  FontStyle bold
+}
+
+interface {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+  BorderThickness 2
+  FontColor #4A148C
+  FontSize 12
+  FontStyle bold
+}
+
+note {
+  BackgroundColor #FFF3E0
+  BorderColor #F57C00
+  BorderThickness 1
+  FontColor #E65100
+  FontSize 10
+}
+
+arrow {
+  LineColor #424242
+  LineThickness 2
+}
+</style>
 
 class Certificate {
     - serial_id: SerialNumber
     - public_key: X509PublicKey  
     - expiry_date: datetime
     - subject_components: dict[str, str]
-    --
+    ====
     + __init__(serial_id, public_key, expiry_date, subject_components)
     + is_expired(now: datetime): bool
 }
 
 class SerialNumber {
     - serial_number: int
-    --
+    ====
     + __init__(serial_number: int)
     + to_hex_uppercase(): str
 }
 
 class X509PublicKey {
     - pem_key: str
-    --
+    ====
     + __init__(pem_key: str)
     + to_ssh_public_key(): str
 }
 
 class AuthorizedKeysBuilder {
-    --
+    ====
     + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
 }
 
@@ -155,10 +236,104 @@ Certificate *-- SerialNumber : composición
 Certificate *-- X509PublicKey : composición
 AuthorizedKeysBuilder ..> X509PublicKey : uses
 
-note top of Certificate : Entidad raíz del dominio\\nEncapsula validaciones de negocio
-note right of SerialNumber : Value Object\\nFormato hexadecimal para EJBCA
-note right of X509PublicKey : Value Object\\nConversión PEM a SSH
-note bottom of AuthorizedKeysBuilder : Servicio de Dominio\\nGenera entrada authorized_keys
+note top of Certificate
+  **Entidad raíz del dominio**
+  Encapsula validaciones de negocio
+end note
+
+note right of SerialNumber
+  **Value Object**
+  Formato hexadecimal para EJBCA
+end note
+
+note right of X509PublicKey
+  **Value Object**
+  Conversión PEM a SSH
+end note
+
+note bottom of AuthorizedKeysBuilder
+  **Servicio de Dominio**
+  Genera entrada authorized_keys
+end note
+
+@enduml`,
+            'service.plantuml': `@startuml
+!theme cerulean-outline
+
+<style>
+class {
+  BackgroundColor #E8F5E8
+  BorderColor #2E7D32
+  BorderThickness 2
+  FontColor #1B5E20
+  FontSize 12
+  FontStyle bold
+  RoundCorner 8
+}
+
+interface {
+  BackgroundColor #E1F5FE
+  BorderColor #0277BD
+  BorderThickness 2
+  FontColor #01579B
+  FontSize 12
+  FontStyle bold
+  RoundCorner 8
+}
+
+note {
+  BackgroundColor #FFF8E1
+  BorderColor #F9A825
+  BorderThickness 1
+  FontColor #F57F17
+  FontSize 10
+  RoundCorner 4
+}
+
+arrow {
+  LineColor #37474F
+  LineThickness 2
+}
+</style>
+
+class AuthenticateService {
+    - certificate_repository: CertificateRepository
+    - authorized_keys_builder: AuthorizedKeysBuilder
+    - logger: Logger
+    ====
+    + __init__(certificate_repository, authorized_keys_builder, logger)
+    + authenticate(serial_id: str, username: str): Tuple[AuthResponse, dict]
+}
+
+interface CertificateRepository {
+    + is_revoked(serial_id: str): Tuple[bool, dict]
+    + get_certificate(serial_id: str): Tuple[Certificate, dict]
+}
+
+class AuthorizedKeysBuilder {
+    ====
+    + __init__()
+    + build(emailAddress: str, commonName: str, role: str, public_key: X509PublicKey): str
+}
+
+AuthenticateService --> CertificateRepository : depends on
+AuthenticateService --> AuthorizedKeysBuilder : uses
+
+note top of AuthenticateService
+  **Capa de Aplicación**
+  Orquesta el flujo de autenticación
+end note
+
+note right of CertificateRepository
+  **Interfaz del Dominio**
+  Abstracción para acceso a datos
+end note
+
+note bottom of AuthorizedKeysBuilder
+  **Servicio de Dominio**
+  Genera formato SSH
+end note
+
 @enduml`
         };
 
@@ -169,10 +344,26 @@ note bottom of AuthorizedKeysBuilder : Servicio de Dominio\\nGenera entrada auth
         const plantUMLContent = document.getElementById('plantUMLContent');
         const messages = document.getElementById('messages');
 
-        function loadDiagramList() {
+        async function loadDiagramList() {
+            fileList.innerHTML = '<div class="loading">Loading diagrams...</div>';
+            
+            // Load diagrams from server
+            const success = await loadDiagramsFromServer();
+            
+            if (!success) {
+                fileList.innerHTML = '<div class="error">Failed to load diagrams. Make sure the API server is running (Docker: port 8082, Local: port 8001).</div>';
+                return;
+            }
+            
             fileList.innerHTML = '';
             
-            Object.keys(diagramFiles).forEach(fileName => {
+            const fileNames = Object.keys(diagramFiles);
+            if (fileNames.length === 0) {
+                fileList.innerHTML = '<div class="loading">No PlantUML files found.</div>';
+                return;
+            }
+            
+            fileNames.forEach(fileName => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.textContent = fileName.replace('.plantuml', '');

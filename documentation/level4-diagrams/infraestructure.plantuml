@@ -1,0 +1,86 @@
+@startuml
+!theme mars
+skinparam classAttributeIconSize 0
+
+package "Capa de Dominio" <<Rectangle>> {
+    interface CertificateRepository {
+        + is_revoked(serial_id: str): Tuple[bool, dict]
+        + get_certificate(serial_id: str): Tuple[Certificate, dict]
+    }
+    
+    class Certificate {
+        - serial_id: SerialNumber
+        - public_key: X509PublicKey
+        - expiry_date: datetime
+        - subject_components: dict
+    }
+}
+package "Librerías Externas" <<Cloud>> {
+    class "requests.Session" {
+        + get()
+        + post()
+        + cert: Tuple[str, str]
+    }
+    
+    class "pyOpenSSL.crypto" {
+        + load_certificate()
+        + dump_publickey()
+    }
+}
+package "Capa de Infraestructura" <<Rectangle>> {
+    class CertificateRepositoryImpl {
+        - ejbca_client: EJBCAClient
+        - certificate_decoder: CertificateDecoder
+        - issuer_dn: str
+        --
+        + __init__(ejbca_client, decoder, issuer_dn)
+        + is_revoked(serial_id: str): Tuple[bool, dict]
+        + get_certificate(serial_id: str): Tuple[Certificate, dict]
+    }
+    note top of CertificateRepositoryImpl : Única clase que conoce\nlos detalles de EJBCA
+
+    class EJBCAClient {
+        - base_url: str
+        - session: requests.Session
+        - key_path: str
+        - cert_password: str
+        - logger: Logger
+        --
+        + __init__(base_url, certificate_path, cert_password)
+        + get_revocation_status(issuer_dn, serial): Tuple[RevocationStatus, error]
+        + search(max_results, criteria): Tuple[dict, error]
+        - _validate_file(path): bool
+    }
+    note top of EJBCAClient : Maneja mTLS,\nreintentos y\ntimeouts
+    
+    class CertificateDecoder {
+        --
+        + from_raw(raw_certificate: str): Certificate
+        - _decode_base64(cert_b64: str): bytes
+        - _parse_x509(cert_pem: bytes): X509
+        - _extract_public_key(x509): X509PublicKey
+    }
+    note top of CertificateDecoder : Transforma formatos:\nBase64 → PEM → Certificate
+    
+    class RevocationStatus <<dataclass>> {
+        + issuer_dn: str
+        + serial_number: str
+        + revoked: bool
+        + revocation_reason: str
+        + revocation_date: datetime
+    }
+}
+
+
+
+CertificateRepositoryImpl ..|> CertificateRepository : implements
+CertificateRepositoryImpl --> EJBCAClient : uses
+CertificateRepositoryImpl --> CertificateDecoder : uses
+CertificateRepositoryImpl ..> Certificate : creates
+
+EJBCAClient --> "Session" : uses
+EJBCAClient ..> RevocationStatus : creates
+CertificateDecoder --> "crypto" : uses
+CertificateDecoder ..> Certificate : creates
+
+@enduml

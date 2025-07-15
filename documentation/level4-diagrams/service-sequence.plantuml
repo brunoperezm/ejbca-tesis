@@ -1,0 +1,50 @@
+@startuml
+!theme mars
+title Flujo de autenticación en la capa de aplicación
+
+actor "PAM Module" as PAM
+participant "AuthenticateService" as Service
+participant "CertificateRepository" as Repo
+participant "Certificate" as Cert
+participant "AuthorizedKeysBuilder" as Builder
+
+PAM -> Service: authenticate(serial_id, username)
+activate Service
+
+Service -> Repo: is_revoked(serial_id)
+activate Repo
+Repo --> Service: (False, None)
+deactivate Repo
+
+alt Certificate is revoked or service error
+    Service --> PAM: AuthResponse(allowed=False)
+end
+
+Service -> Repo: get_certificate(serial_id)
+activate Repo
+Repo --> Service: (certificate, None)
+deactivate Repo
+
+alt Certificate not found or service error
+    Service --> PAM: (None, error)
+end
+
+Service -> Cert: is_expired()
+activate Cert
+Cert --> Service: False
+deactivate Cert
+
+alt Certificate expired
+    Service --> PAM: AuthResponse(allowed=False)
+end
+
+
+Service -> Builder: build(email, CN, username, public_key)
+activate Builder
+Builder --> Service: "ssh-rsa AAAA... user@domain"
+deactivate Builder
+
+Service --> PAM: AuthResponse(allowed=True, authorized_keys_entry=...)
+deactivate Service
+
+@enduml

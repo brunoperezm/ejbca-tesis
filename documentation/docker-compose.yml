@@ -9,13 +9,14 @@ services:
     volumes:
       - ./dsl:/usr/local/structurizr
   
-  mermaid-viewer:
+  plantuml-viewer:
     image: python:3.9-alpine
-    container_name: mermaid-viewer
+    container_name: plantuml-viewer
     restart: always
     ports:
-      - "8081:8000"
+      - "8081:8000"  # Static file server
+      - "8082:8001"  # API server for list_diagrams.py
     volumes:
       - ./level4-diagrams:/app
     working_dir: /app
-    command: python -m http.server 8000
+    command: sh -c "python list_diagrams.py 8001 & python -m http.server 8000"
