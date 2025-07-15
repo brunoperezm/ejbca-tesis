@@ -11,7 +11,7 @@ def authenticate(serial_id, username):
     
     try:
         # Configurar el contexto SSL con los certificados
-        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         
         # Cargar certificado y llave del cliente
         ctx.load_cert_chain(
@@ -20,7 +20,7 @@ def authenticate(serial_id, username):
         )
         
         # Verificación del certificado del servidor (opcional, pero recomendado)
-        ctx.load_verify_locations('/etc/pam_python/ca.crt')  # Ruta al certificado CA
+        #ctx.load_verify_locations('/etc/pam_python/ca.crt')  # Ruta al certificado CA
         
         # Crear solicitud HTTPS
         request = urllib2.Request(url)
