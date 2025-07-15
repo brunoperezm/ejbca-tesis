@@ -2,36 +2,63 @@
 !theme mars
 title Flujos de la Capa de Infraestructura
 
-actor Client
+participant "Presentation Layer" as Presentation
+participant AuthenticateService
 participant CertificateRepositoryImpl as Repo
 participant EJBCAClient
 participant CertificateDecoder as Decoder
 participant "EJBCA REST API" as EJBCA
 
 == Inicialización ==
-Client -> Repo: __init__(ejbca_client, decoder, issuer_dn)
-note right: Config válida es responsabilidad\ndel cliente (URLs, certificados)
-Repo -> EJBCAClient: valida configuración interna
-EJBCAClient -> EJBCAClient: verifica certificados mTLS
+
+Presentation -> EJBCAClient: __init__(base_url, cert_path, cert_password)
+activate EJBCAClient
+EJBCAClient -> EJBCAClient: _validate_file(cert_path)
+EJBCAClient -> EJBCAClient: setup mTLS session
+note right: Valida certificados cliente\ny configura sesión HTTPS
+Presentation <-- EJBCAClient: initialized
+deactivate EJBCAClient
+
+Presentation -> Decoder: __init__()
+activate Decoder
+Presentation <-- Decoder: initialized
+deactivate Decoder
+
+Presentation -> Repo: __init__(ejbca_client, decoder, issuer_dn)
+activate Repo
+Presentation <-- Repo: initialized
+deactivate Repo
 
 == Verificación de Revocación ==
-Client -> Repo: is_revoked(serial_id)
+AuthenticateService -> Repo: is_revoked(serial_id)
+activate Repo
 Repo -> EJBCAClient: get_revocation_status(issuer_dn, serial_id)
+activate EJBCAClient
 EJBCAClient -> EJBCA: GET /v1/certificate/{issuer_dn}/{serial}/revocationstatus
+activate EJBCA
 EJBCA --> EJBCAClient: RevocationStatus JSON
+deactivate EJBCA
 EJBCAClient --> Repo: (RevocationStatus, None)
-Repo --> Client: (bool revoked, error)
+deactivate EJBCAClient
+Repo --> AuthenticateService: (bool revoked, error)
+deactivate Repo
 
 == Obtención de Certificado ==
-Client -> Repo: get_certificate(serial_id)
-Repo -> EJBCAClient: search(criteria=[serial_id])
+AuthenticateService -> Repo: get_certificate(serial_id)
+activate Repo
+Repo -> EJBCAClient: search(criteria=[serial_id, ...])
+activate EJBCAClient
 EJBCAClient -> EJBCA: POST /v1/certificate/search
+activate EJBCA
 EJBCA --> EJBCAClient: {"certificates": [raw_cert_data]}
+deactivate EJBCA
 EJBCAClient --> Repo: (search_response, None)
+deactivate EJBCAClient
 Repo -> Decoder: from_raw(raw_certificate)
+activate Decoder
 Decoder --> Repo: Certificate object
-Repo --> Client: (Certificate, None)
-
-note over Repo, EJBCA: Todos los errores HTTP/parsing\nse encapsulan como dict de error
+deactivate Decoder
+Repo --> AuthenticateService: (Certificate, None)
+deactivate Repo
 
 @enduml

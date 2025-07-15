@@ -2,6 +2,10 @@
 !theme mars
 skinparam classAttributeIconSize 0
 
+' Layout directives for better organization
+top to bottom direction
+skinparam packageStyle rectangle
+
 package "Capa de Dominio" <<Rectangle>> {
     interface CertificateRepository {
         + is_revoked(serial_id: str): Tuple[bool, dict]
@@ -15,18 +19,7 @@ package "Capa de Dominio" <<Rectangle>> {
         - subject_components: dict
     }
 }
-package "Librerías Externas" <<Cloud>> {
-    class "requests.Session" {
-        + get()
-        + post()
-        + cert: Tuple[str, str]
-    }
-    
-    class "pyOpenSSL.crypto" {
-        + load_certificate()
-        + dump_publickey()
-    }
-}
+
 package "Capa de Infraestructura" <<Rectangle>> {
     class CertificateRepositoryImpl {
         - ejbca_client: EJBCAClient
@@ -39,6 +32,8 @@ package "Capa de Infraestructura" <<Rectangle>> {
     }
     note top of CertificateRepositoryImpl : Única clase que conoce\nlos detalles de EJBCA
 
+    EJBCAClient ||--|| CertificateDecoder
+    
     class EJBCAClient {
         - base_url: str
         - session: requests.Session
@@ -51,7 +46,7 @@ package "Capa de Infraestructura" <<Rectangle>> {
         + search(max_results, criteria): Tuple[dict, error]
         - _validate_file(path): bool
     }
-    note top of EJBCAClient : Maneja mTLS,\nreintentos y\ntimeouts
+    note left of EJBCAClient : Maneja mTLS,\nreintentos y\ntimeouts
     
     class CertificateDecoder {
         --
@@ -60,7 +55,7 @@ package "Capa de Infraestructura" <<Rectangle>> {
         - _parse_x509(cert_pem: bytes): X509
         - _extract_public_key(x509): X509PublicKey
     }
-    note top of CertificateDecoder : Transforma formatos:\nBase64 → PEM → Certificate
+    note right of CertificateDecoder : Transforma formatos:\nBase64 → PEM → Certificate
     
     class RevocationStatus <<dataclass>> {
         + issuer_dn: str
@@ -71,16 +66,33 @@ package "Capa de Infraestructura" <<Rectangle>> {
     }
 }
 
+package "Librerías Externas" <<Cloud>> {
+    class "requests.Session" {
+        + get()
+        + post()
+        + cert: Tuple[str, str]
+    }
+    
+    class "pyOpenSSL.crypto" {
+        + load_certificate()
+        + dump_publickey()
+    }
+}
 
-
+' Relationships organized by layer
 CertificateRepositoryImpl ..|> CertificateRepository : implements
 CertificateRepositoryImpl --> EJBCAClient : uses
 CertificateRepositoryImpl --> CertificateDecoder : uses
-CertificateRepositoryImpl ..> Certificate : creates
 
-EJBCAClient --> "Session" : uses
+EJBCAClient --> Session : uses
 EJBCAClient ..> RevocationStatus : creates
-CertificateDecoder --> "crypto" : uses
+
+CertificateDecoder --> crypto : uses
 CertificateDecoder ..> Certificate : creates
+
+' Layout hints for better positioning
+CertificateRepository -[hidden]-> Certificate
+EJBCAClient -[hidden]-> RevocationStatus
+Session -[hidden]-> crypto
 
 @enduml
