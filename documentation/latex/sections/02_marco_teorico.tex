@@ -1,0 +1,545 @@
+\chapter{Marco Teórico}\label{cap:marco}
+% explicar bien cómo se resolvió esto antes.
+% "Método habitual de resolver acceso de servidores en una arquitectura de isla de servidores usando ssh."
+% Añadir una subsección de "productos que ya existen" o que solucionan el problema.
+
+\section{Virtualizacion}
+
+En Informática, la virtualización es la creación a través de software de una representación (versión virtual) de algún recurso tecnológico. Por tanto este software tiene la función de simular la existencia del recurso tecnológico que se quiere virtualizar.
+
+La virtualización consiste en utilizar software para crear una réplica de un recurso tecnológico físico como pueden ser servidores, aplicaciones, redes o almacenamiento.
+
+El dispositivo físico que hará las veces de anfitrión se conoce como host, este será el encargado de alojar los diferentes recursos virtualizados conocidos como máquinas virtuales. Para gestionar las máquinas virtuales es necesario instalar en 
+el host una herramienta específica denominada software de virtualización, que puede ser de dos tipos:
+
+\begin{itemize}
+    \item Nativo. En este caso el software de virtualización también actuará como sistema operativo ejecutándose directamente sobre el hardware del dispositivo anfitrión o host. Este tipo de virtualización, se denomina de Tipo 1.
+    \item Hosted o alojado. El software de virtualización se ejecuta sobre el sistema operativo del host. Este tipo de virtualización, se denomina de Tipo 2.
+\end{itemize}
+
+En la siguiente imagen se describe de manera gráfica los dos tipos de software de virtualización y cómo son ejecutados en el host:
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Virtualizacion.png}
+    \caption{Comparación entre las virtualizaciones nativas y las hosteadas}
+    \label{fig:Virtualizacion}
+\end{figure}
+
+
+\section{Docker}
+
+Docker\cite{Docker}\cite{Docker_conceptos} es una herramienta que permite crear contenedores que encapsulan las dependencias que requiere una aplicación para correr.
+
+Los contenedores son piezas de software livianas, independientes, empaquetables y ejecutables que incluyen todo lo que necesita para correr las aplicaciones: código, herramientas de sistema, librerías y configuraciones. Cabe aclarar que un contenedor se ejecuta como un proceso independiente dentro de un sistema operativo por consiguiente puede ser afectado por el controlador de procesos del sistema operativo.
+
+Por otro lado, una imagen de Docker, es una receta para poder instanciar contenedores, tantos como sean necesarios de la misma aplicación. La imagen está descrita en un archivo llamado Dockerfile, dentro de este archivo se encuentran todas las capas necesarias para construir la imagen. A su vez las imágenes tienen un tag o etiqueta que permite versionarlas.
+
+Hasta este punto se tiene una imagen construida y un contenedor creado a partir de la imagen, ejecutándose en la máquina local. Sin embargo, la potencia de los contenedores se presenta a la hora de realizar despliegues (o “Deployments”) de las aplicaciones en diferentes entornos. Para esto se tiene un nuevo concepto llamado registro. Docker registry es un repositorio donde se almacenan imágenes de Docker.
+La versión comercial se encuentra en Dockerhub\cite{Dockerhub}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Docker_conceptos.png}
+    \caption{Docker: Esquema de los conceptos}
+    \label{fig:Docker_conceptos}
+\end{figure}
+
+La figura \ref{fig:Docker_conceptos} muestra un esquema en el que se ilustran los conceptos mencionados anteriormente, además de los comandos de Docker, y también aparece el Docker daemon, que es el proceso encargado de gestionar las imágenes y contenedores. Por otro lado, el registry representa un repositorio en la nube, al que se pueden subir o bajar imágenes.
+
+Gracias a la tecnología de los contenedores, podemos abstraernos del sistema en el que se corre la aplicación, y dar solución al problema de que la aplicación funciona en algunos sistemas y no en otros, típicamente por problemas en sus dependencias.
+
+
+\subsection{Docker Compose}
+Para facilitar la inicialización del contenedor se usa Docker Compose\cite{Docker_Compose}, que es una herramienta para declarar como código YAML uno o más contenedores para instanciarse, desde qué imagen se parte, y su configuración específica, como el mapeo de puertos con el sistema host, si posee o no un volumen asociado, redes, entre otras.
+
+Gracias a esta herramienta, basta con ejecutar el comando \texttt{sudo docker-compose up} para iniciar el contenedor correspondiente al self-hosted runner. Cabe aclarar que Docker Compose no agrega funcionalidad más allá de Docker, sino que permite declarar como código las configuraciones que de otra forma tendrían que hacerse con los comandos de docker: \texttt{docker pull, docker build, docker run} como se muestran en
+la figura \ref{fig:Docker_conceptos}. 
+
+\section{Criptografía}
+
+La criptografía es la ciencia y la tecnología para mantener los mensajes seguros. El criptoanálisis es la ciencia y la tecnología para romper los textos cifrados. Ambas se engloban en la rama de las matemáticas llamada criptología\cite{Applied_Cryptography}.
+
+Hoy se desarrollan sistemas de seguridad que aplican la criptografía para mantener seguros los datos sensibles de una comunicación. Entre ellos, por ejemplo, los que corresponden a transacciones comerciales sobre internet. En la criptografía moderna se pueden diferenciar dos claras vertientes, la criptografía simétrica y la criptografía asimétrica o de clave pública. La primera se basa en algoritmos simétricos que usan una misma clave para encriptar y desencriptar mensajes, y la segunda se basa en algoritmos de clave pública que usan claves distintas para la encriptación y desencriptación. Una \textit{Public Key Infrastructure} (PKI) es el conjunto de hardware, software, recursos humanos, políticas y procedimientos que se necesitan para crear, gestionar, almacenar, distribuir y revocar certificados digitales basados en criptografía asimétrica. Con ella es posible llevar adelante servicios de seguridad complejos para una comunicación distribuida para una población numerosa de usuarios.
+
+\section{Certificados Digitales}
+
+Los certificados digitales son una parte fundamental de la tecnología PKI. Son los contenedores para la distribución de una de las claves: la pública. Los esfuerzos por desarrollar una arquitectura basada en certificados en Internet llevaron a adoptar el modelo de arquitectura basado en los certificados X.509 desarrollado por el grupo de trabajo PKIX del IETF. 
+Actualmente el término PKIX hace referencia a la infraestructura de clave pública basada en certificados X.509 y el término certificado PKIX usualmente hace referencia a los perfiles de certificado y de listas de revocación basados en el estándar de certificados X.509 v3. Cabe mencionar que el grupo de trabajo PKIX ha producido una serie de estándares para satisfacer las necesidades de una PKIX, como el RFC 3280 (Certificate and CRL Profile), el RFC 2560 (Online Certificate Status Profile), el RFC 3161 (Time Stamp Protocol), entre otros.
+
+\section{Infraestructura de Clave Publica (PKI)}
+
+\subsection{Autoridad de Certificación}
+
+Según el estandar X.509 e IETF-PKIX publicada por la Unión Internacional de Telecomunicaciones, la autoridad de certificación es ``una autoridad a la cual uno o más usuarios han confiado la creación y
+asignación de certificados. Opcionalmente, la autoridad de certificación puede crear las claves de los
+usuarios."
+
+El Framework EJBCA nos permite implementar una autoridad de certificación de una PKI: 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/arquitectura_PKI.jpg}
+    \caption{Arquitectura de una PKI}
+    \label{fig:arquitectura_PKI}
+\end{figure}
+
+
+
+Una \textbf{ACRaiz}, como se muestra en \ref{fig:arquitectura_PKI}, contiene un certificado auto firmado y también se denomina raíz de confianza. La verificación de otros certificados en la PKI finaliza con el certificado auto firmado de la \textbf{ACRaiz}. Dado que el certificado de la \textbf{ACRaiz} está auto firmado, debe configurarse de alguna manera como una raíz confiable para todos los clientes en la PKI.
+
+Una \textbf{AC Secundaria}, AC subordinada o SubAC para abreviar, es una AC cuyo certificado está firmado por otra AC, que puede ser otra SubAC o Root CA. Dado que el certificado está firmado por otra AC, no es necesario configurarlo como raíz de confianza. Es parte de una cadena de certificados que termina en una ACRaiz.
+
+Una \textbf{Autoridad de Registro} es una función administrativa que registra entidades en la PKI. Se confía en la AR para identificar y autenticar entidades de acuerdo con la política de las AC. Puede haber una o más AR conectadas a cada AC en la PKI. 
+
+Una \textbf{Autoridad de Validación} es responsable de proporcionar información sobre si un certificado es actualmente válido o no. La AV no emite ni revoca certificados, pero los valida proporcionando una lista de certificados revocados para una CA, conocida como \textbf{Certification Revocation List}. Otro método que puede admitir AV es el \textbf{Online Certificate Status Protocol}, el que facilita una búsqueda en tiempo real del estado de un certificado; en comparación con la CRL que se genera en un horario establecido. El AV puede responder a las solicitudes de OCSP y responder si un certificado es válido, revocado o desconocido. Puede haber uno o más VA conectados a cada CA en la PKI.\cite{Solinas}
+
+\subsection{Entidad final}
+Una entidad final es un usuario de la PKI, como un dispositivo, una persona o un servidor. Se denomina “End Entity” porque en una jerarquía de certificados en la PKI, siempre es el punto final, ya que no está autorizado para emitir ningún certificado propio. El individuo o dispositivo de la Entidad Final solicita un certificado de la AC a la AR. Una entidad final puede tener muchos certificados, pero todos estos certificados tendrán los mismos valores de identificación. Una Entidad Final no debe confundirse con una persona física. Desde el punto de vista de una AC, una Entidad Final puede ser un usuario físico, pero en realidad es cualquier entidad que posee un certificado.
+
+\subsubsection{Perfil de entidad final} 
+Los perfiles de entidad final definen plantillas para entidades finales. Un perfil de entidad final no es intrínsecamente necesario, ya que EJBCA proporciona un perfil predeterminado (denominado Vacío) que no ofrece restricciones, pero para casi todas las PKI es útil y, a menudo, necesario imponer algunas restricciones sobre los valores que los usuarios pueden usar para inscribirse en una entidad final. Los valores definidos en los Perfiles de Entidad Final son los que pertenecen directamente a la Entidad Final, y por extensión a los campos identificativos del certificado excepto los datos relativos a claves y firmas, que se definirán en los Perfiles de Certificado. Los valores típicos definidos, además de los perfiles de certificado disponibles y las AC disponibles, serán valores de identificación Distinguished Name de sujeto (como por ejemplo: país, organización, nombre común, etc.) y nombres alternativos de sujeto.
+
+\subsection{Perfil de certificado}
+Un perfil de certificado se utiliza para configurar cierto contenido y restricciones de los certificados, como extensiones de certificado, algoritmos disponibles, tamaños de clave, etc. Básicamente, describe a qué se limitará un certificado emitido.
+
+\subsection{Servicios disponibles/arquitecturas}
+Una arquitectura colapsada, como se muestra en la Figura \ref{fig:arquitectura_colapsada}, contiene todas las funciones en un único hardware.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/arquitectura_colapsada.jpg}
+    \caption{Arquitectura colapsada}
+    \label{fig:arquitectura_colapsada}
+\end{figure}
+
+
+En la versión empresarial es posible distribuir los servicios en soportes diferentes, como se muestra en la Figura \ref{fig:arquitectura_empresarial}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/arquitectura_empresarial.jpg}
+    \caption{Arquitectura empresarial}
+    \label{fig:arquitectura_empresarial}
+\end{figure}
+
+
+Para tener un grado de seguridad aún mayor las AC pueden disponer separar en soportes diferentes el Root CA y la base de datos de certificados emitidos, como se muestra en la Figura \ref{fig:pki_hsm_db}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/pki_hsm_db.jpg}
+    \caption{Función de HSM y DB separados}
+    \label{fig:pki_hsm_db}
+\end{figure}
+
+\subsection{Distribución de certificados}
+Dado que una PKI es realmente una infraestructura de seguridad, debe integrarse de acuerdo con las necesidades de seguridad de la organización y el caso de uso. Cada caso de uso y organización tiene sus propias necesidades especiales, lo que hace que la integración sea verdaderamente universal. Un punto de integración que ocurre regularmente es la integración con directorios o bases de datos corporativos. EJBCA puede publicar información en directorios, bases de datos u otros servidores, utilizando su amplia gama de publicadores.
+
+
+\subsection{Descripción general de los protocolos remotos}
+EJBCA admite una amplia gama de protocolos para diversos casos de uso y necesidades. El más común es OCSP para manejar solicitudes de estado de certificados. También admite protocolos de registro estrictos, como SCEP, EST y ACME, y protocolos de administración de certificados más avanzados, como CMP. EJBCA cuenta con propia API REST de administración de certificados y servicios web EJBCA. El último también proporciona una amplia gama de otras tareas, como aprobaciones y gestión de AC. Todos los protocolos pueden ser enviados por proxy a través de otra instancia de EJBCA que actúa como AR conectado sobre pares\cite{Protocolos}.
+
+\section{HSM}
+
+\textbf{HSM}\cite{HSM_Wikipedia} son las siglas de \textit{\textbf{H}ardware \textbf{S}ecurity \textbf{M}odule} (Módulo de Seguridad de Hardware). Se trata de un dispositivo criptográfico basado en hardware que genera, almacena y protege claves criptográficas y suele aportar aceleración hardware para operaciones criptográficas. Estos dispositivos pueden tener conectividad SCSI/IP u otras y aportar funcionalidad criptográfica de clave pública de alto rendimiento que se efectúa dentro del propio hardware. Debido a las diferentes capas de seguridad y estándares que deben cumplir estos dispositivos, genera que su costo sea muy alto para nuestra economía. Por ende, exploramos y profundizamos una opción de HSM basada en software, como lo es SoftHSM más cercana a las posibilidades económicas actuales.
+
+El uso de HSM en EJBCA, se ve reflejado como un Crypto Token donde se representa como un conjunto de claves criptográficas que pueden estar protegidas por una contraseña y pueden activarse o desactivarse como un todo. Los tokens criptográficos vienen en dos tipos:
+
+\begin{itemize}
+    \item Soft Crypto Tokens que se almacenan en la base de datos como archivos PKCS12 protegidos por una contraseña.
+    \item Tokens criptográficos PKCS11 que se almacenan dentro de un HSM y se accede a ellos a través de la API PKCS11.
+\end{itemize}
+
+\section{PKCS\#11}
+
+El estándar PKCS\#11 define una API genérica de acceso a dispositivos criptográficos (HSM). Ademas cable aclarar que  PKCS\#12 que define un formato de archivos para guardar una clave privada con su certificado protegidos por una clave simétrica. 
+
+El estándar PKCS\#11 especifica una interfaz de programación de aplicaciones, llamada ``Cryptoki", para utilizar dispositivos que contienen información criptográfica y realizan funciones criptográficas. Cryptoki sigue un enfoque simple basado en objetos, que persigue como objetivos principales la independencia tecnológica (cualquier tipo de dispositivo) y el uso compartido de recursos (múltiples aplicaciones que acceden a múltiples dispositivos), presentando a las aplicaciones una vista lógica común del dispositivo llamada "token criptográfico". La especificación original del estándar define los tipos de datos y las funciones disponibles para una aplicación que requiera servicios criptográficos utilizando el lenguaje de programación “ANSI C”. El proveedor de una implementación de la biblioteca Cryptoki generalmente proporciona estos tipos de datos y funciones a través de archivos de encabezado ANSI C.
+
+Esta API permite escribir aplicaciones flexibles, independientes del proveedor y de la implementación final de hardware que este realice. 
+
+\subsection{Opciones de implementación}
+Se podría utilizar un HSM conectado mediante un bus PCIe
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/HSM_bus_PCIe.png}
+    \caption{HSM\_bus\_PCIe}
+    \label{fig:HSM_bus_PCIe}
+\end{figure}
+
+Se podría usar un dispositivo conectado por red
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/HSM_red.png}
+    \caption{HSM\_red}
+    \label{fig:HSM_red}
+\end{figure}
+
+Se podría usar un softhsm de software
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/HSM_software.png}
+    \caption{HSM\_software}
+    \label{fig:HSM_software}
+\end{figure}
+
+\section{Api REST}
+
+Una Application Programming Interface (API) es un conjunto de rutinas que provee acceso a funciones de un determinado software. Son publicadas por los constructores de software para permitir acceso a características de bajo nivel o propietarias, detallando solamente la forma en que cada rutina debe ser llevada a cabo y la funcionalidad que brinda, sin otorgar información acerca de cómo se lleva a cabo la tarea. Son utilizadas por los programadores para construir sus aplicaciones sin necesidad de volver a programar funciones ya hechas por otros, reutilizando código que se sabe que está probado y que funciona correctamente.
+
+\subsection{REST}
+REST no es un protocolo ni un estándar, sino más bien un conjunto de límites de arquitectura. Los desarrolladores de las API pueden implementarlo de distintas maneras.
+
+Para que una API se considere de RESTful, debe cumplir los siguientes criterios:
+
+\begin{itemize}
+    \item Arquitectura cliente-servidor compuesta de clientes, servidores y recursos, con la gestión de solicitudes a través de HTTP.
+    \item Comunicación entre el cliente y el servidor sin estado, lo cual implica que no se almacena la información del cliente entre las solicitudes de GET y que cada una de ellas es independiente y está desconectada del resto.
+    \item Datos que pueden almacenarse en caché y optimizan las interacciones entre el cliente y el servidor.
+    \item Una interfaz uniforme entre los elementos, para que la información se transfiera de forma estandarizada. Para ello deben cumplirse las siguientes condiciones:
+    \begin{itemize}
+        \item Los recursos solicitados deben ser identificables e independientes de las representaciones enviadas al cliente.
+        \item El cliente debe poder manipular los recursos a través de la representación que recibe, ya que esta contiene suficiente información para permitirlo.
+        \item Los mensajes autodescriptivos que se envíen al cliente deben contener la información necesaria para describir cómo debe procesarla.
+        \item Debe contener hipertexto o hipermedios, lo cual significa que cuando el cliente acceda a algún recurso, debe poder utilizar hipervínculos para buscar las demás acciones que se encuentren disponibles en ese momento.
+    \end{itemize}
+    \item Un sistema en capas que organiza en jerarquías invisibles para el cliente cada uno de los servidores (los encargados de la seguridad, del equilibrio de carga, etc.) que participan en la recuperación de la información solicitada.
+    \item Código disponible según se solicite (opcional), es decir, la capacidad para enviar códigos ejecutables del servidor al cliente cuando se requiera, lo cual amplía las funciones del cliente.
+\end{itemize}
+Si bien la API de REST debe cumplir todos estos parámetros, resulta más fácil de usar que un protocolo más antiguo, como SOAP (protocolo simple de acceso a objetos), el cual tiene requisitos específicos, como la mensajería XML y la seguridad y el cumplimiento integrados de las operaciones, que lo hacen más lento y pesado. 
+
+Por el contrario, REST es un conjunto de pautas que pueden implementarse según sea necesario. Por esta razón, las API de REST son más rápidas y ligeras, cuentan con mayor capacidad de ajuste y, por ende, resultan ideales para el Internet de las cosas (IoT) y el desarrollo de aplicaciones para dispositivos móviles. 
+
+\section{EJBCA REST API}
+
+EJBCA REST API contiene “endpoints” destinados a la integración con el Framework EJBCA, que permiten la gestión de la AC, la gestión de tokens criptográficos y la gestión de certificados. Esto permite una integración liviana mediante HTTP. El alcance de la API es limitado en comparación con el conjunto completo de funciones proporcionadas por EJBCA y proporciona funciones como solicitudes de certificados, inscripción, revocación, importación y exportación de configuraciones de Config Dump y más. EJBCA Community incluye una API REST para la inscripción de certificados y un subconjunto de la API REST de administración completa incluida en EJBCA Enterprise. 
+
+Para simplificar el desarrollo y comenzar a integrarse con EJBCA Community, existe un cliente REST de código abierto\cite{EJBCA_rest_client} escrito en JAVA.
+
+\subsection{Recursos expuestos en EJBCA REST API}
+
+Ejbca expone los siguientes recursos y sus métodos asociados:
+
+\begin{itemize}
+    \item EJBCA system administration
+    \begin{itemize}
+        \item devuleve la versión de EJBCA
+    \end{itemize}
+    \item EJBCA CA management
+    \begin{itemize}
+        \item Lista todos los CAs disponibles
+        \item Devuelve la cadena de certificados PEM de un CA determinado
+        \item Se fija si un certificado fue revocado
+        \item Certificados
+        \begin{itemize}
+            \item Devuelve el certificado PEM en base64
+            \item Revoca un certificado
+        \end{itemize}
+        \item CRL
+        \begin{itemize}
+            \item Crea o actualiza el CRL
+            \item Devuelve la CRL
+        \end{itemize}
+    \end{itemize}
+    \item EJBCA user management
+    \begin{itemize}
+        \item Crea o edita un usuario
+        \item Usuario CRUD
+        \begin{itemize}
+            \item Devuelve la información del usuario
+            \item Revoca todos los certificados de un usuario
+        \end{itemize}
+        \item Lista certificados de los usuarios
+        \item Devuelve el certificado firmado
+    \end{itemize}
+\end{itemize}
+
+La documentación específica y las pruebas manuales pueden realizarse utilizando la interfaz auto generada por ejbca \texttt{https://localhost:8443/ejbca/doc/rest}.
+
+\section{SSH}
+
+El protocolo SSH\cite{260631}\cite{SSH} es un método  que utiliza encriptación para proveer una conexión remota segura entre un cliente y un servidor. Este metodo se asegura de encriptar la autenticación, comandos, respuesta y transferencia de archivos, lo que convierte a SSH en una alternativa secura a otros métodos tales como telnet, rlogin o FTP.
+
+Este protocolo funciona haciendo uso del modelo cliente-servidor, donde la conexión es establecida por el cliente SSH, hacia el servidor SSH. El cliente hace uso de criptografía de clave pública para verificar la identidad del servidor, posteriormente usa encriptación simétrica y algoritmos de hashing para asegurar la privacidad e integridad de los datos que son compartidos entre el cliente y el servidor. La conexión  se puede ver en la imagen \ref{fig:SSH_Client_Server}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/SSH_Client_Server.png}
+    \caption{Como funciona el protocolo SSH}
+    \label{fig:SSH_Client_Server}
+\end{figure}
+
+
+\subsection{OpenSSH}
+
+Desarrollado por OpenBSD en base a la versión gratuita original de SSH de Tatu Ylonen, OpenSSH\cite{OpenSSH} es la implementación open source más utilizada para conexiones usando el protocolo SSH. 
+
+OpenSSH es utilizado no solo por garantizar la conexión segura a servidores, si no también por que cuenta con herramientas incorporadas como túneles seguros, distintos métodos de autenticación y opciones de configuraciones mas avanzadas como el uso de PAM, o la interacción con teclado durante la autenticación, que seran utilizados en este proyecto.
+
+\subsection{Conexión SSH haciendo uso de par de claves}
+
+Cuando se esta llevando a cabo el proceso de conexión de un cliente a un servidor, el mismo funciona distinto según el método elegido para hacerlo. 
+
+En caso de estar haciendo uso del par de claves publicas-privadas, primero, el usuario deberá crear un par de claves, y copiar su clave pública en \texttt{\textasciitilde/.ssh/authorized\_keys}. 
+Luego cuando el cliente trata de ingresar al servidor, se puede observar en su comportamiento que\cite{autenticacion_ssh_claves}:
+
+\begin{itemize}
+    \item El cliente le envía su clave pública al servidor.
+    \item El servidor compara la clave pública recibida, con las claves que tiene en \textit{authorized\_keys}.
+    \item Si no lo encuentra rechaza la conexión, caso contrario sigue con el proceso de autenticación.
+    \item Haciendo uso de la clave pública del usuario, el servidor encripta un mensaje aleatorio que genera en el momento.
+    \item El servidor envía el mensaje encriptado al usuario.
+    \item El usuario utilizará su clave privada para desencriptar el mensaje recibido, y se lo envía de vuelta al servidor (usando hashing).
+    \item El servidor compara el mensaje recibido con el enviado, en caso de ser iguales, significa que el usuario efectivamente posee la clave privada correspondiente, y el usuario queda autenticado.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ssh-key-based-authentication.png}
+    \caption{Autenticación SSH basado en par de claves}
+    \label{fig:ssh-key-based-authentication}
+\end{figure}
+
+\section{PAM}
+
+Una de las piezas fundamentales de este trabajo es el uso de PAM, entendiendo al mismo como \textbf{P}luggable \textbf{A}uthentication \textbf{M}odules (PAM\cite{PAM}) ó \textit{Módulos de Autenticación Conectables}, y no como \textbf{P}rivileged \textbf{A}ccess \textbf{M}anagement (PAM\cite{PAM2}) ó \textit{Gestión de Acceso Privilegiado}, que también podría ser mencionado en trabajos de esta naturaleza.
+
+PAM es un conjunto de librerías que permiten a diferentes aplicaciones en un sistema linux gestionar la autenticación. 
+
+Su principal característica es que puede ser configurada de forma dinámica, de forma que el administrador de sistema puede decidir como las distintas aplicaciones van a autenticar a los usuarios.
+
+La tarea de autenticación es dividida en cuatro grupos por el PAM:
+
+\begin{itemize}
+    \item \textbf{Account}
+    \begin{itemize}
+        \item Hace referencia a la gestión o verificación de cuentas, como ser:
+        \begin{itemize}
+            \item Tiene la contraseña actualizada?
+            \item Tiene permiso para acceder a este servicio?
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Auth}
+    \begin{itemize}
+        \item Hace referencia al manejo de la autentificación.
+        \item Autentica a los usuarios y define sus credenciales, esto podría hacerse con un pedido de contraseña, ó métodos más avanzados como elementos de hardware o datos biométricos.
+        \item Mientras se pueda desarrollar un modulo que implemente un método de autenticación mas avanzando, puede ser añadido, siendo este el beneficio del modulo PAM.
+        \item Esta tarea en particular es la que se explota en este proyecto.
+    \end{itemize}
+    \item \textbf{Password}
+    \begin{itemize}
+        \item Responsable de actualizar los mecanismos de autentificación.
+        \item Suele ir ligado a la tarea de auth
+    \end{itemize}
+    \item \textbf{Session}
+    \begin{itemize}
+        \item Se encarga de las tareas que se llevan a cabo antes de iniciar un determinado servicio y después de finalizarlo.
+        \item Es importante ya que proporciona una eficaz manera de hacer que antes y después de cargar cada módulo se ejecuten ciertas tareas que afectan a las aplicaciones a las que
+       dan servicio.
+       \item Ejemplos de esto serían tareas de gestión de archivos de registro, o el crear la carpeta base de un usuario.
+    \end{itemize}
+\end{itemize}
+
+\section{Servicio}
+
+En el contexto de sistemas distribuidos, un \textbf{servicio} es una unidad funcional autocontenida que expone operaciones específicas a través de una interfaz bien definida, generalmente accesible mediante una red. Estas operaciones son consumidas por otros componentes del sistema, los cuales no necesitan conocer los detalles internos de su implementación, solo la interfaz pública que el servicio expone.
+
+Un servicio tiene una \textbf{responsabilidad clara}, puede ser \textbf{desplegado de forma independiente}, y suele ser reutilizable en múltiples contextos. Este tipo de diseño promueve la separación de responsabilidades, la escalabilidad del sistema y una mayor facilidad para el mantenimiento y evolución del software.
+
+En este proyecto, se desarrolló un servicio de autenticación que encapsula la lógica necesaria para validar certificados X.509 y determinar si un usuario puede acceder a un servidor. Este servicio está implementado como una API REST mínima, compuesta por dos endpoints, pero cumple con las características esenciales de un servicio: encapsula una funcionalidad concreta, se comunica por red, y es consumido por otros módulos del sistema (en este caso, un módulo PAM).
+
+Además, al estar containerizado con Docker, el servicio es portable, reproducible y fácilmente integrable dentro de una arquitectura más amplia.
+
+\subsubsection{Arquitectura en capas}
+
+Cuando hablamos de \textbf{arquitectura} en un servicio o una aplicación, nos referimos a cómo está organizado el código internamente: qué responsabilidades tiene cada parte, cómo se conectan entre sí, y dónde vive cada cosa. La idea no es solamente que el código funcione, sino que sea fácil de entender, mantener y modificar sin romper todo lo demás.
+
+Una buena arquitectura busca que la \textbf{lógica de negocio}, en este caso la autenticación de usuarios, esté contenida en un solo lugar. Si el día de mañana cambia la forma en la que decidimos si un certificado es válido, lo ideal sería tener que modificar una sola parte del sistema, y no tener que buscar esa lógica mezclada entre controladores, conexiones de red o manejo de archivos.
+
+Esto se relaciona con el \textbf{principio de responsabilidad única}, que dice que cada módulo o clase debería tener un solo motivo para cambiar. En este caso, la parte del código que implementa la autenticación debería cambiar solo si cambia la lógica de autenticación. Si cambia, por ejemplo, la API externa de EJBCA, eso no debería afectar la lógica de negocio directamente. Es un detalle de infraestructura, y debería estar aislado.
+
+Una forma común de lograr esta separación es la llamada \textbf{arquitectura en capas}, donde el sistema se divide en componentes con responsabilidades claras:
+
+\begin{itemize}
+    \item Una capa de entrada (por ejemplo, un servidor HTTP).
+    \item Una capa de aplicación, que coordina el flujo de información.
+    \item Una capa de dominio, donde vive la lógica de negocio.
+    \item Una capa de infraestructura, donde están los detalles técnicos como las llamadas a EJBCA o el sistema de archivos.
+\end{itemize}
+
+Un modelo más estricto que sigue esta idea es el de \textbf{Clean Architecture}, propuesto por Robert C. Martin\cite{Martin2017}. Esta arquitectura plantea que todo lo técnico y cambiante (frameworks, bases de datos, servicios externos) quede en los bordes del sistema, mientras que el núcleo con la lógica de negocio no depende de nada de eso.
+
+Aunque el servicio desarrollado no sigue de manera estricta todas las reglas de Clean Architecture, sí toma inspiración de sus ideas para organizar el código. En particular, se buscó que la lógica de autenticación estuviera bien separada de los detalles técnicos como la API REST o los adaptadores externos, de forma que el sistema pueda mantenerse y evolucionar más fácilmente en el futuro.
+
+Dentro de esta arquitectura se utilizaron distintos conceptos importantes en la escritura de un código expresivo y mantenible.
+
+% ---------- Marco teórico: principios de diseño (versión extendida) ----------
+
+\paragraph{Value Object}
+Un \emph{Value Object} (VO) modela un concepto cuyo estado se define sólo por sus atributos; si todas las propiedades coinciden, dos instancias son equivalentes \cite{fowler_value_object_2016}. Al no necesitar identidad propia, el VO se vuelve naturalmente inmutable: una vez construido no cambia, lo que simplifica el razonamiento en entornos concurrentes y evita errores de aliasing. En este proyecto los VO encapsulan datos esenciales como el \texttt{serial} del certificado X.509, el \texttt{SubjectDN} o la \texttt{X509PublicKey}. Cada vez que se crea un nuevo VO se valida la forma y rango de esos datos (por ejemplo, que la longitud del serial sea la esperada), de modo que cualquier instancia que circule por el código ya está garantizada como “válida”. Esta estrategia concentra las reglas de negocio cerca del dato, reduce la duplicación de verificaciones y libera a los servicios superiores de realizar chequeos repetitivos, haciendo al código más expresivo y mantenible.
+
+\paragraph{Principio de responsabilidad única}
+El \emph{Single Responsibility Principle} (SRP) indica que un módulo debe tener una única razón para cambiar \cite{martin_srp_2014}. En la práctica esto significa separar lógica de negocio, persistencia y presentación: si mañana se cambia el proveedor de PKI o la forma de exponer la API, la lógica central permanece intacta. 
+Dentro de la arquitectura se aprecia la aplicación de este principio en la separación clara entre componentes que cumplen roles distintos. Por ejemplo, el proxy SSH actúa exclusivamente como intermediario de conexión y túnel seguro, sin involucrarse en decisiones de autenticación ni en lógica de negocio. El servicio de autenticación, por su parte, se enfoca únicamente en validar credenciales y certificados, delegando el almacenamiento de datos a servicios externos. Incluso el módulo PAM, integrado en el sistema operativo, cumple una única función: delegar la autenticación a un mecanismo configurable sin conocer los detalles de implementación detrás. Esta división de responsabilidades permite modificar o reemplazar un componente sin impactar en los demás, facilitando el mantenimiento y las pruebas del sistema.
+
+Cada pieza es pequeña, cohesionada y fácilmente testeable en aislamiento. Al aplicar SRP, la base de código se vuelve más comprensible: quien lee sabe que una clase hace “una sola cosa”, y los cambios de última hora tienen menos probabilidad de quebrar partes no relacionadas.
+
+\paragraph{Inversión de dependencias}
+La \emph{Dependency Inversion Principle} (DIP) sugiere que tanto módulos de alto nivel como de bajo nivel dependan de abstracciones, no de implementaciones concretas \cite{byu_dip_2018}. Esto invierte la dirección natural de las dependencias: las políticas de negocio (alto nivel) dictan la interfaz que los detalles (bajo nivel) deben cumplir. En nuestro servicio de autenticación, por ejemplo, la lógica del \texttt{AuthenticationService} depende de una interfaz \texttt{CertificateRepository}. Ese contrato puede ser implementado por un repositorio sobre EJBCA, por un stub en memoria para pruebas o por un servicio remoto. Cambiar una implementación no obliga a recompilar la capa superior, y los tests pueden inyectar dobles sin tocar la lógica real. Así se logra un acoplamiento mínimo y una infraestructura fácilmente sustituible, cualidad clave cuando el proyecto evoluciona o se integra con sistemas ajenos.
+
+\paragraph{Inyección de dependencias}
+La \emph{Dependency Injection} (DI) materializa el DIP: las dependencias se suministran desde fuera, ya sea por constructor, por métodos \emph{setter} o por una interfaz especializada \cite{fowler_dependency_injection_2004}. El código consumidor no sabe \emph{cómo} se crea la instancia; sólo declara qué necesita. En este trabajo, el framework en sí construye los objetos al arrancar el servicio, lee la configuración (por ejemplo, la URL del servidor EJBCA) y decide qué implementaciones concretas inyectar. Gracias a ello, cambiar de un repositorio real a uno \emph{mock} para pruebas unitarias es cuestión de ajustar un parámetro de arranque. El resultado es un sistema menos acoplado, con dependencia explícita y visible en la firma de los constructores, y con tests que se ejecutan en milisegundos porque no necesitan levantar toda la infraestructura externa.
+
+\subsection{Pruebas unitarias}
+\label{sec:marco_pruebas_unitarias}
+Las \emph{pruebas unitarias} constituyen la verificación de los componentes más pequeños de un programa—funciones, métodos u objetos—de forma aislada respecto de sus dependencias externas. Según Sommerville, una prueba unitaria consiste en invocar la rutina bajo prueba con distintos parámetros de entrada y contrastar su resultado con el esperado; el objetivo es exponer defectos antes de la integración y permitir que la batería de tests se ejecute en segundos para detectar regresiones de manera continua \cite{sommerville}.  
+Para que estas pruebas sean efectivas, el autor recomienda cubrir todos los aspectos del objeto analizado: (i) ejercitar todas sus operaciones, (ii) fijar y comprobar cada atributo relevante y (iii) llevar al objeto a todos los estados posibles, simulando los eventos que provocan cambios de estado. Esta estrategia se refuerza con el uso de \textit{mocks} cuando existen dependencias lentas o aún no implementadas, de modo que la unidad permanezca completamente controlada y reproducible \cite{sommerville}.  
+En el ecosistema Python, el estándar de estilo PEP 8 complementa estas buenas prácticas proponiendo convenciones de nombres que facilitan la legibilidad y la auto-detección de tests por herramientas como \texttt{pytest}: archivos llamados \texttt{test\_<módulo>.py}, clases \texttt{TestCamelCase} y funciones \texttt{test\_snake\_case}. Mantener esta nomenclatura coherente garantiza que la suite pueda ejecutarse sin configuración adicional y que el propósito de cada caso sea evidente para cualquier desarrollador que lea el código \cite{pep8}.  
+
+
+\section{mTLS}
+
+\textbf{Mutual TLS} (mTLS), o \textit{TLS Mutuo}, es una extensión del protocolo TLS tradicional que permite no solo verificar la identidad del servidor frente al cliente (como sucede en HTTPS), sino también autenticar al cliente frente al servidor\cite{cloudflare_mtls,mozilla_mtls}. Es decir, se establece una autenticación bilateral utilizando certificados digitales en ambos extremos de la conexión.
+
+El protocolo TLS, por sí solo, proporciona confidencialidad, integridad y autenticación del servidor. mTLS agrega una capa adicional de seguridad al requerir que el cliente también presente un certificado válido, el cual es verificado por el servidor durante el proceso de \textit{handshake}\cite{rfc5246}.
+
+Este mecanismo se utiliza principalmente en sistemas donde es necesario garantizar que ambos extremos de la comunicación son entidades confiables, como en la comunicación entre servicios, APIs internas, entornos financieros.
+
+En el proyecto se decidió utilizar mTLS para autenticar a los clientes del módulo PAM con el servicio de autenticación que tiene la lógica para determinar si el usuario con el certificado son válidos. De esta manera la única manera válida de interactuar con el servicio de autenticación es con un cliente que tenga un certificado emitido por una CA de confianza.
+
+\subsection*{Funcionamiento general}
+Durante la negociación mTLS, ambos extremos del canal intercambian certificados X.509 firmados por una Autoridad de Certificación (CA) confiable. El proceso incluye los siguientes pasos:
+
+\begin{enumerate}
+    \item El cliente inicia la conexión con un \textit{Client Hello}.
+    \item El servidor responde con su certificado digital (como en TLS tradicional).
+    \item Si mTLS está habilitado, el servidor solicita también un certificado al cliente.
+    \item El cliente envía su certificado digital y prueba la posesión de la clave privada asociada.
+    \item Ambos extremos validan que los certificados presentados sean válidos y estén firmados por una CA reconocida.
+    \item Si ambas validaciones son exitosas, se establece un canal seguro y autenticado.
+\end{enumerate}
+
+\subsection*{Ventajas}
+\begin{itemize}
+    \item Autenticación mutua sin intervención del usuario, basada en certificados digitales.
+    \item Eliminación del uso de contraseñas o tokens compartidos.
+    \item Protección frente a ataques de intermediarios (MitM) y suplantación de identidad.
+    \item No hace falta guardar la clave pública de cada cliente en el servidor\cite{google_mtls}.
+\end{itemize}
+
+
+\section{Autenticación}
+
+La autenticación\cite{Autenticacion_auth0}\cite{Autenticacion_win}, especialmente en la conexión a un servidor, es un proceso que se utiliza para corroborar que solo las personas, servicios o aplicaciones adecuados, con los permisos correctos pueden acceder a algún recurso del servidor, llevando a cabo una serie de pasos predefinidos para demostrar la identidad de quien trata de ingresar.
+
+El proceso de autenticación incluye tres pasos principales:
+
+\begin{itemize}
+    \item \textbf{Identificación}
+    \begin{itemize}
+        \item Los usuarios establecen quiénes son, normalmente a través de un nombre de usuario.
+        \item Esta información es posible que sea de público conocimiento, y por ello no se utiliza este paso en solitario.
+    \end{itemize}
+    \item \textbf{Autenticación}
+    \begin{itemize}
+        \item Los usuarios prueban que son quienes dicen ser, esto se hace con lo conocido como factores de autenticación, y es donde hay mayor variación según políticas de seguridad, siendo:
+        \begin{itemize}
+            \item \textit{Algo que se sabe}, por ejemplo, ingresando una contraseña (algo que, supuestamente, solo conoce el propio usuario).
+            \item \textit{Algo que se tiene}, por ejemplo, un teléfono o dispositivo de tokens.
+            \item \textit{Algo que se es}, por ejemplo, escaneos biométricos.
+        \end{itemize}
+        \item Al hacer uso de dos de estos métodos para poder autenticarse, es cuando se habla de \textit{Autenticación de Dos Factores} (2FA), y al seguir agregando más de estos métodos, se habla ya de \textit{Autenticación Multifactor} (MFA), siendo 2FA una forma de MFA.
+    \end{itemize}
+    \item \textbf{Autorización}
+    \begin{itemize}
+        \item El sistema comprueba que los usuarios tengan permisos para el sistema al que intentan acceder.
+    \end{itemize}
+\end{itemize}
+
+Este proyecto se centra tan solo en el paso de autenticación.
+
+\subsection{Soluciones ya conocidas}
+
+\subsubsection{Autenticación normal}
+
+A la hora de hablar de métodos de autenticación a servidores, no esta de más reconocer que una de las formas más comunes se limita aún a utilizar solamente la combinación de usuario y contraseña. Existen también casos en los que se ha buscado aumentar la seguridad de estos métodos implementando un VPN a modo de firewall, permitiendo tan solo el ingreso a servidores a quienes hayan podido ingresar a la red privada que el VPN ofrece.
+
+En los últimos años, a medida que ha aumentado la ciberdelicuencia, es cada vez más común que aplicaciones de uso común por un gran grueso de los usuarios de medios digitales, insten a sus usuarios o los obliguen a utilizar MFA, lo que ha incrementado la familiaridad de los usuarios con las distintas opciones existentes para autenticación.
+
+Sin embargo, a la hora de hablar del ingreso a un servidor, esto cambia, no solo por ser un proceso mas engorroso, también por que en general implica a una persona u organización a destinar recursos especialmente a la implementación y mantenimiento de nuevos métodos de autenticación, lo que termina por resentir el aumentar la seguridad en sus sistemas.
+
+\subsubsection{Herramientas OpenSSH}
+\label{sec:herramientas_openssh}
+
+Como fue mencionado anteriormente, OpenSSH cuenta con herramientas incorporadas para aumentar la seguridad durante la autenticación a un servidor en una conexión SSH, entre ellos podemos notar:
+
+\begin{itemize}
+    \item Cambiar puerto por defecto.
+    \item Bloquear acceso como usuario root.
+    \item Establecer limites para cantidad de tiempo de espera, máximo numero de intentos de ingreso de contraseña, máximo logins simultáneos desde una IP.
+    \item Crear listas blancas o negras de usuarios o grupos, para permitir o negar el acceso de determinados usuarios o grupos.
+    \item Cifrado Simétrico, Asimétrico, y Hashing.
+    \item Haciendo uso de certificados digitales SSH.
+    \item Haciendo uso de OTP.
+    \item Solamente permitiendo el acceso de determinadas IPs.
+\end{itemize}
+
+Los métodos mencionados anteriormente, además, pueden ser combinados entre ellos.
+
+A día de hoy, PSI ha implementado en los múltiples servidores que cuenta, un sistema de autenticación haciendo uso de las herramientas de OpenSSH\cite{Muñoz}, específicamente los de clave publica-privada y certificados digitales.
+
+Un técnico que busca ingresar a un servidor de la PSI, cuenta con configuraciones hechas ya en su equipo, así como un par de claves, y un certificado SSH.
+
+Para acceder a un servidor cualquiera, utiliza un servidor intermedio de proxy para poder llegar finalmente al servidor deseado.
+Durante este proceso el técnico no necesitara ingresar credenciales, dado que la configuración que posee en su equipo, posibilitan que exista un intercambio con el servidor, en el que se hace uso de la clave pública-privada, o del certificado digital.
+
+
+Como se ha mencionado, OpenSSH permite el ingreso a servidores haciendo uso de certificados, sin embargo no soporta el uso de certificados X.509\cite{ssh_vs_509}, si no que necesita de los denominados \textit{Certificados SSH} los cuales contienen menor cantidad de información.
+Estos certificados pueden ser emitidos por el propio OpenSSH, quien hace uso de la clave privada de una AC, y la clave pública del usuario, a diferencia de los certificados X.509 que utilizan también la clave privada del usuario para firmar un CSR, antes que el mismo sea firmado por la AC.
+
+En el caso de la PSI, se resolvió utilizar OpenSSL, para que mediante lineas de comando en la CLI, tener una AC primitiva con la que poder emitir los certificados para los usuarios.
+Posteriormente se agregan en los servidores, las configuraciones necesarias para que el usuario pueda acceder, siendo estas configuraciones la creación de usuario de sistema para el técnico en servidor de proxy, y el agregar la clave pública en el archivo \textit{/authorized\_keys} en el home del usuario recién creado. El dominio de seguridad (principal) del certificado emitido al técnico debe coincidir con el principal configurado en el servidor destino, de este modo el técnico podrá acceder.
+
+En caso de querer quitar el acceso a un usuario de uno, o varios servidores, se debe emitir un nuevo certificado sin el principal al que pertenecen los servidores en cuestión. Para retirar el acceso total a los servidores se debe eliminar su usuario de sistema en el servidor proxy.
+
+
+Como este proyecto nace en busca de mejorar los procedimientos utilizados en PSI, no podemos dejar de notar en su implementación los siguientes problemas:
+
+\begin{itemize}
+    \item La AC al estar manejada por CLI presenta un nivel alto de complejidad para su manejo.
+    \item La AC no es capaz de revocar certificados, ni de retener información de los mismos.
+    \item La AC no puede ofrecer roles, tales como los de AR o AV.
+    \item No existe un control centralizado de emisión, verificación y revocación de certificados.
+    \item Al utilizar certificados SSH, los mismos no pueden ser utilizados con otro propósito que el de autenticación a servidores mediante SSH.
+    \item Tanto para permitir el ingreso de un técnico, como el de quitarlo, necesita de la intervención manual de un administrador en uno o varios servidores.
+    \item El servidor proxy que habilita la conexión con los destinos presenta una vulnerabilidad al agregar la clave pública de los usuarios de manera permanente.
+    \item La forma de operación con intervención manual limita la escalabilidad.
+    \item Si no se mantiene un seguimiento estricto de los técnicos y sus credenciales, se podría caer en la situación donde aquellos ya no afiliados a la PSI sigan teniendo acceso a sus servidores.
+\end{itemize}
+
+\subsubsection{Tectia}
+
+Como se menciono anteriormente, OpenSSH esta basado en  la versión gratuita original de SSH de Tatu Ylonen, ahora bien, luego de publicarlo como freeware, continuo trabajando sobre el protocolo, y formo su propia empresa en base a ello, ofreciendo su producto llamado \textit{Tectia}\cite{Tectia}.
+
+A diferencia de su publicación original y de OpenSSH Tectia es un servicio pago para la comunicación segura haciendo uso del protocolo SSH, y en compensación ofrece herramientas y beneficios en comparación a OpenSSH\cite{Tectia_vs_OpenSSH}, siendo la más relevante para mencionar con respecto a este proyecto integrador, la posibilidad de hacer uso de certificados X.509 para la autenticación.
+
+\subsubsection{AthenZ}
+
+AthenZ\cite{Athenz} es un servicio open source desarrollado por \textit{Yahoo!} (ahora parte de Verizon Media) para realizar autenticación haciendo uso de certificados X.509, además de autorización haciendo uso de control de acceso granular. AthenZ fue aceptado por Cloud Native Computing Foundation (CNCF) como un proyecto con madurez de \textit{sandbox}\cite{Athenz_cnfc}.
+
+AthenZ es una herramienta muy poderosa, ya que permite implementar control de acceso basado en roles (RBAC) y control de acceso basado en atributos (ABAC), además de tener integración con herramientas  y plataformas en la nube, o basados en contenedores.
+
+Para la gestión de la autenticación hace uso de certificados X.509, los mismos son certificados efímeros de 30 días de duración, y los mismos pueden tener integración con algún HSM.
+
+Viendo una solución tan completa en AthenZ, se entendió que este producto no era el buscado en este proyecto, principalmente por dos motivos:
+
+\begin{itemize}
+    \item No tiene enfoque en ser utilizado para autenticarse a servidores, si no a aplicaciones y servicios.
+    \item Haciendo uso de AthenZ, los certificados digitales se verían limitados en su contenido, ademas de no tener el mismo nivel de gestión de los certificados y ACS que un framework como EJBCA ofrece.
+\end{itemize}
+
+

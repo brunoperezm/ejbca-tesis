@@ -1,0 +1,2307 @@
+% Cambiar por "iteraciones"
+% cada iteracion debe finalizar con un resumen o un parrafo que rescate los resultados obtenidos con sus experiencias positivas y negativas. y ademas una oracion que explique cómo sigue la iteración siguiente.
+% Pensarlo de la siguiente manera: el capitulo final de "concsluiones" debería ser un copy paste de las mini consclusiones de cada iteración
+\chapter{Iteraciones Desarrolladas}\label{cap:actividades}
+
+En este capítulo se desarrollará el trabajo realizado en el Proyecto Integrador, presentado en forma de iteraciones para encapsular las distintas etapas por las que pasó el trabajo, incluyendo la solución encontrada, así como pensamientos adicionales y una conclusión de cada iteración.
+
+\section{Iteración 1: Instalación y configuración del sistema del entorno productivo}
+
+\subsection{Antecedente}
+
+La cátedra del LARyC nos facilitó un servidor Dell que anteriormente había sido usado para otro proyecto para poder usarlo en el presente trabajo. El mismo, se encontraba configurado con un usuario y contraseña que nos era desconocido, por lo que no era posible discernir su estado ni contenido.
+
+Adicionalmente, en el laboratorio había un rack para instalar el servidor, con un Switch para poder conectarlo a la red de la facultad y tener salida a Internet.
+
+\subsection{Desarrollo}
+
+Se descargó la imagen de VMware ESXi 6.7\cite{VMware_6.7_download} y se monto en un pendrive usando Rufus\cite{Rufus}. Se inició el servidor con el pendrive insertado, además de pantalla y teclado, y se forzó a usar el pendrive para bootear, consiguiendo acceder a la pantalla de instalación de VMware.
+
+Para instalar, se siguieron procedimientos oficial\cite{VMware_6.7_install}, eligiendo el disco duro del servidor, borrando todo su contenido preexistente.
+
+Una vez que se reinicia y levanta con el nuevo SO, se le configura una IP privada provisional, para poder entrar vía web a la gestión del servidor. Para ello, nos dirigimos a: \texttt{F2 $\rightarrow{}$ Configure Managment Network $\rightarrow{}$ IPv4 Configuration}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Configuración_IP_fantasia.jpg}
+    \caption{Configuración IP privada para configuración inicial}
+    \label{fig:Configuración IP privada para configuración inicial}
+\end{figure}
+
+Habiendo ya configurado una IP, y conectando una computadora directamente al NIC 0, se puede ingresar poniendo la IP en la URL del navegador, iniciando con usuario root y contraseña configurada durante el proceso de instalación, nos encontramos en la página de inicial. En esta página podemos ver información sobre los componentes del servidor.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/componentes_server.png}
+    \caption{Página inicial VMware ESXi}
+    \label{fig:componentes_server}
+\end{figure}
+
+Teniendo ya nuestro virtualizador, empezamos con configuraciones generales, antes de empezar con las VMs.
+
+Se habilita la opción que permite seleccionar VMs para que se prendan solas cuando el servidor se prenda, para ello nos dirigimos a  \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Inicio automático} y lo habilitamos con un retraso de 120 segundos al iniciar.
+
+Desde allí le asignamos la licencia para poder hacer uso de todas las opciones del sistema desde \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Licencias $\rightarrow{}$ Asignar licencia}
+
+Ahora vamos a hacer los preparativos para poder cumplir con la topología de red. Para ello vamos a \texttt{Redes $\rightarrow{}$ Conmutadores virtuales $\rightarrow{}$ Agregar conmutador virtual estándar}. Aquí se crean dos switch virtuales, ligando cada uno de uno de los NIC físicos del equipo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/vSwitches.png}
+    \caption{Menú de creación switch virtuales}
+    \label{fig:vSwitches}
+\end{figure}
+
+A continuación, en \texttt{Redes $\rightarrow{}$ Grupos de puertos $\rightarrow{}$ Agregar grupos de puertos} se crean las VLANs asignándolas al switch virtual correspondiente.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/grupo_puertos.png}
+    \caption{Menú de creación de puertos, con sus VLAN asociadas}
+    \label{fig:grupo_puertos}
+\end{figure}
+
+Como último paso en la preparación previa a la creación de las VMs, se sube la imagen del Ubuntu Server 20.04\cite{Ubuntu_20.04_download} a utilizar en \texttt{Almacenamiento $\rightarrow{}$ datastore1 $\rightarrow{}$ Explorador de almacenes de datos $\rightarrow{}$ Cargar}.
+
+Ahora que tenemos todo el escenario preparado, en \texttt{Maquinas virtuales $\rightarrow{}$ Crear/Registrar máquina virtual} podremos crear nuestras VMs.
+Las 3 VMs fueron creadas de la misma forma:
+\begin{itemize}
+    \item \textbf{Seleccionar tipo de creación}
+    \begin{itemize}
+        \item Crea una máquina virtual.
+    \end{itemize}
+    \item \textbf{Seleccione un nombre y un sistema operativo invitado}
+    \begin{itemize}
+        \item Nombre $\rightarrow{}$ Bastion/destino1/EJBCA
+        \item Compatibilidad $\rightarrow{}$ Maquina virtual con ESXi 6.7
+        \item Familia del sistema operativo invitado $\rightarrow{}$ Linux
+        \item Versión del sistema operativo invitado $\rightarrow{}$ Ubuntu Linux (64 bits)
+    \end{itemize}
+    \item \textbf{Seleccionar almacenamiento}
+    \begin{itemize}
+        \item datastore1
+    \end{itemize}
+    \item \textbf{Personalizar configuración}
+    \begin{itemize}
+        \item CPU $\rightarrow{}$ Capacidad de procesamiento
+        \begin{itemize}
+            \item A todas las VMs se les asigna 2 vCPU.
+        \end{itemize}
+        \item Memoria $\rightarrow{}$ Memoria tipo RAM
+        \begin{itemize}
+            \item La memoria es el recurso más escaso del servidor, por lo que debemos asignar responsablemente sus recursos
+            \item A la VM Bastion y destino1 se les asigna 1GB, dado que solamente recibiran solicitudes de acceso.
+            \item A la VM de EJBCA se le asigna 2GB, ya que necesita \href{https://hub.docker.com/r/keyfactor/ejbca-ce#:~:text=Minimum%20System%20Requirements,at%20least%201GB%20of%20RAM}{1GB para correr el contenedor}, y se le asigna 1GB extra para el servicio de autenticación.
+            \item Es importante destacar que estos valores son los valores mínimos para nuestro laboratorio de pruebas, pero no representa los requerimientos reales de implementar una solución semejante.
+        \end{itemize}
+        \item Disco duro 1 $\rightarrow{}$ Espacio total
+        \begin{itemize}
+            \item A todas las VMs se les asigna 35GB.
+        \end{itemize}
+        \item Adaptador de red 1 $\rightarrow{}$ Grupos de puertos
+        \item Unidad de CD/DVD 1 $\rightarrow{}$ Archivo ISO del almacén de datos $\rightarrow{}$ Imagen Ubuntu Server.
+    \end{itemize}
+    \item \textbf{Finalizar}
+\end{itemize}
+
+Al terminar con esta tarea, las 3 VMs fueron creadas, al seleccionarlas en Maquinas virtuales, se abre la información detallada de cada una.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/vms.png}
+    \caption{Menú de maquinas virtuales, con las VMs creadas}
+    \label{fig:vms}
+\end{figure}
+
+En este punto, ya podemos prender las VMs, y configurarlas haciendo uso de la consola que nos mostrará en su página dedicada. Adicionalmente se toma la precaución de habilitar el inicio automático en caso de reinicio seleccionando \texttt{Acciones $\rightarrow{}$ Inicio automático $\rightarrow{}$ Habilitar}.
+
+
+Para instalar Ubuntu sobre las VMs, se puede seguir un procedimiento estándar\cite{instalar_ubuntu}, teniendo en consideración:
+\begin{itemize}
+    \item En la página dedicada a cada VM donde encontramos la consola, también podemos encontrar en \textit{Configuración de hardware} los adaptadores de red asignados, y el expandirlos, nos muestra la MAC de cada uno.
+    \item Haciendo uso de la MAC de cada interfaz de red, en la etapa de configuración de redes se puede configurar las distintas redes según se detalló en Topología de Red \ref{sec:topología_de_red}
+    \item Se hace uso del disco entero, sin usar LVM ni RAID.
+    \item Se utiliza la opción de instalar OpenSSH durante la instalación del SO.
+    \item No se hace uso de la opción de instalar paquetes adicionales.
+\end{itemize}
+
+\subsection{Conclusión}
+
+Al finalizar con esta iteración, contamos con un servidor Dell con SO VMware ESXi 6.7, donde se han configurados dos switch virtuales con distintas VLANs en las mismas, y 3 VMs con SO Ubuntu Server 20.04, con inicio automático configurado.
+
+Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
+
+\begin{itemize}
+    \item \textbf{REQ\_F\_INF\_1:}
+    \begin{itemize}
+        \item Dado que el virtualizador instalado, permite ingresar al sistema de las VMs como si se hubiera conectado un monitor a un equipo físico, en caso de que hubiera una falla que impidiera el acceso mediante SSH, de todas formas se podría acceder a los mismos por este medio.
+    \end{itemize}
+    \item \textbf{REQ\_F\_INF\_4:}
+    \begin{itemize}
+        \item Los servidores con SO Ubuntu 20.04 mantienen un registro de los intentos de autenticación al servidor en el archivo \texttt{/var/log/auth.log}.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_3:}
+    \begin{itemize}
+        \item Al crear las VMs, al asignarles los recursos a las mismas, se asegura que el sistema pueda dar un tiempo de respuesta menor a los 3 segundos ante un intento de ingreso.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_4:}
+    \begin{itemize}
+        \item Durante el proceso de instalación de las VMs, al cargarle la imagen del SO, se aseguro de que las mismas tuvieran la distribución requerida.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_9:}
+    \begin{itemize}
+        \item Se esta haciendo uso de un servidor, el cual esta por definición preparado para funcionar constantemente sin interrupción\cite{server_vs_pc}, y haciendo uso de la opción de inicio automático, se ha preparado al sistema para otorgar la mayor disponibilidad a nuestra disposición.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_13:}
+    \begin{itemize}
+        \item Al crear las VMs, al asignarles los recursos a las mismas, se asegura que el sistema pueda ser capaz de manejar la autenticación de 50 usuarios simultáneamente.
+    \end{itemize}
+\end{itemize}
+
+\section{Iteración 2: Instalación y configuración EJBCA}
+\label{sec:iteracion_instalacion_configuracion_ejbca}
+
+\subsection{Antecedente}
+
+Al comenzar esta iteración, contamos con una VM con SO Ubuntu 20.04, dentro del virtualizador VMware ESXi, con 35 GB de espacio, 2 vCPU, 2GB de RAM, y además de redes internas, temporalmente un acceso directo a internet para poder hacer las instalaciones necesarias.
+
+\subsection{Desarrollo}
+
+\subsubsection{Instalación Docker}
+
+Para empezar esta iteración, arrancamos realizando la instalación de Docker y Docker-Compose:
+
+\begin{lstlisting}[language=Bash, caption={Install Docker}, label={cod:Install_docker}, captionpos=b]
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+\end{lstlisting}
+
+Para verificar que Docker se encuentra instalado correctamente, se puede correr:
+
+\begin{lstlisting}[language=Bash, caption={Docker hello-world}, label={cod:Docker_hello-world}, captionpos=b]
+sudo docker run hello-world
+\end{lstlisting}
+
+A continuación, para poder usar Docker sin estar en usuario root, y para que se inicie junto al boot del sistema:
+
+\begin{lstlisting}[language=Bash, caption={Docker postinstall}, label={cod:Docker_postinstall}, captionpos=b]
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+#Para el autoinicio
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+\end{lstlisting}
+
+\subsubsection{Instalación y Configuración de SoftHSM}
+\label{sec:softhsm_install}
+
+En este servidor no se instalo de manera local SoftHSM, sin embargo nos fue necesario el conocer como instalarlo y usarlo, para luego poderlo sincronizar con EJBCA, y a su vez para investigar su posible uso del lado del técnico.
+
+Para instalar SoftHSM, se puede realizarlo con:
+\begin{lstlisting}[language=Bash, caption={Instalación SoftHSM}, label={cod:bash0}, captionpos=b]
+sudo apt-get install softhsm2
+\end{lstlisting}
+
+
+El paquete de Ubuntu para SoftHSM2 no siempre se inicializa correctamente (según la versión del SO), por lo que es posible que se deban crear directorios faltantes, etc. También pueden existir problemas con permisos, por ello se presentan los siguientes pasos, siendo el último el único obligatorio, que es el comando con el que se inicia un slot:
+\begin{lstlisting}[language=Bash, caption={Siguientes pasos}, label={cod:bash1}, captionpos=b]
+sudo mkdir /var/lib/softhsm/tokens #Probablemente este ya este creado y no haga falta
+sudo chmod a+rwx /var/lib/softhsm
+sudo chmod a+rwx /var/lib/softhsm/tokens
+sudo chmod a+rx /etc/softhsm
+sudo chmod a+r /etc/softhsm/*
+softhsm2-util --init-token --free --label {NAME}
+\end{lstlisting}
+
+Reemplazando donde dice \textbf{NAME} por el nombre que se considere oportuno asignar:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/instalacion_SoftHSM.png}
+    \caption{Instalación SoftHSM}
+    \label{fig:instalacion_SoftHSM}
+\end{figure}
+
+En la imagen se puede observar como solicita insertar la contraseña del usuario del sistema y luego pide establecer un PIN que será la contraseña del slot. Tanto el LABEL como el PIN son de importancia para la manipulación del SoftSHM.
+Para comprobar los slots creados, se pueden chequear con:
+
+\begin{lstlisting}[language=Bash, caption={Comando para ver slots creados}, label={cod:show_slots}, captionpos=b]
+softhsm2-util --show-slots
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/show_slots.png}
+    \caption{Slot creado dentro de SoftHSM}
+    \label{fig:show_slots}
+\end{figure}
+
+
+En caso de tener problemas con la instalación manual, también existen alternativas, por ejemplo repositorios \href{https://github.com/sungsu-cho/softhsm-install}{GitHub}, donde la instalación esta resuelta (En este caso, junto a OpenSSL), o similares.
+
+
+\subsubsection{Instalación de EJBCA con Docker y SoftHSM}
+\label{sec:instalacion_ejbca_cocker_softhsm}
+
+Anteriormente se mencionó que para levantar el servicio de EJBCA, se tomo la decisión de utilizar el Docker ofrecido en su versión gratuita por Bitnami, y si bien existe la posibilidad de utilizar las versiones estables en DockerHub, se eligió descargar el \href{https://github.com/bitnami/containers/tree/main/bitnami/ejbca}{repositorio oficial} que se pudo encontrar abierto en Github, esto fue hecho para poder realizar modificaciones.
+
+Por lo tanto, dentro de nuestra carpeta \texttt{/home/ejbca} descargamos el repositorio, y dentro de \texttt{/xx/8/debian-12} nos encontramos con su \textit{Dockerfile} y \textit{docker-compose}.
+
+En el \textit{docker-compose} podemos ver como incluye la imagen de la base de datos \textit{MariaDB} y la imagen de \textit{EJBCA}, por lo que para incluir SoftHSM se nos presentan 3 opciones:
+
+\begin{enumerate}
+    \item Realizar una tercera imagen con SoftHSM instalado, y comunicarla con la imagen de EJBCA mediante volúmenes compartidos.
+    \item Tener SoftHSM instalado de manera local, y comunicarlo con el contenedor para su uso.
+    \item Instalar SoftHSM en la misma imagen de EJBCA
+\end{enumerate}
+
+Con respecto a las primeras dos opciones, nos encontramos con el detalle de que EJBCA solo permite hacer uso del SoftHSM si el mismo se encuentra instalado en el mismo usuario, lo que se presenta como un impedimento, que fue resuelto ya por Bitnami en su versión paga, por lo que se descartó dicha opción.
+
+Justificando de esta manera el haber descargado el repositorio, optamos por la tercera opción, y modificamos el \textit{Dockerfile}, agregando sobre el final las siguientes lineas:
+
+\begin{lstlisting}[language=Bash, caption={Instalacion SoftHSM en Docker}, label={cod:softhsm_docker}, captionpos=b]
+RUN apt-get update && apt-get upgrade -y \
+	&& apt-get install build-essential -y \
+	&& apt-get install wget -y \
+	&& apt-get install libtool libtool-bin -y \
+	&& apt-get install libssl-dev -y \
+	&& apt-get install opensc -y
+	
+RUN wget https://dist.opendnssec.org/source/softhsm-2.3.0.tar.gz
+RUN tar -xzf softhsm-2.3.0.tar.gz
+WORKDIR /softhsm-2.3.0
+RUN ./configure --disable-gost
+RUN make
+RUN make install
+
+USER 1001 
+RUN softhsm2-util --init-token --free --label "SoftHSM Slot 1" --pin ejbca --so-pin ejbca
+\end{lstlisting}
+
+Y de esta manera, al levantar el contenedor, se instaló también dentro del mismo SoftHSM (haciendo uso de un comprimido con un \textit{Makefile} con los pasos necesarios) y es posible desde la interfaz de EJBCA acceder al slot creado.
+
+Volviendo al \textit{docker-compose}, el mismo debe ser modificado también. 
+
+Primero, en las variables de ambiente, tanto para \textit{MariaDB} como EJBCA, se presentan opciones de personalización tales como usuario y contraseña, que fuera de un entorno de investigación deberían ser modificados y ocultados.
+
+A continuación se puede notar que la imagen de EJBCA que utiliza es la que se encuentra en \textit{DockerHub}, por lo tanto se cambia la linea para que utilice el \textit{Dockerfile} recientemente modificado, de forma que:
+
+\begin{lstlisting}[language=Bash, caption={Docker-Compose usando EJBCA de DockerHub}, label={ejbca_dockerhub}, captionpos=b]
+ejbca:
+    image: docker.io/bitnami/ejbca:8
+\end{lstlisting}
+
+Fue cambiado a:
+
+\begin{lstlisting}[language=Bash, caption={Docker-Compose usando EJBCA de Dockerfile}, label={cod:ejbca_dockerfile}, captionpos=b]
+ejbca:
+    build:
+        context: .
+        dockerfile: Dockerfile
+\end{lstlisting}
+
+Adicionalmente, para asegurarnos de que ante un reinicio de sistema, los contenedores \href{https://www.baeldung.com/ops/docker-containers-start-automatically}{reinicien automáticamente}, se agrega al final tanto de la descripción de \textit{MariaDB} como de EJBCA:
+
+\begin{lstlisting}[language=Bash, caption={Reinicio automatico de Docker}, label={cod:restart_always}, captionpos=b]
+restart: always
+\end{lstlisting}
+
+Con todo ya preparado para iniciar los contenedores, y utilizando un Dockerfile en lugar de una imagen de DockerHub, ubicados en la carpeta con ambos archivos, se utilizan dos comandos:
+
+\begin{lstlisting}[language=Bash, caption={Iniciar docker-compose con SoftHSM por primera vez}, label={cod:Iniciar_docker-compose_con_SoftHSM_por_primera_vez}, captionpos=b]
+#Solamente la primera vez
+docker-compose up --build
+
+#A partir de la segunda vez, solamente se usa este comando
+docker-compose up -d
+\end{lstlisting}
+
+\subsubsection{Acceso a EJBCA}
+
+En este punto, se habilitó para configurar y operar el EJBCA una página web, para poder acceder a ella, se podría conectar al servidor mediante un tunel, o configurar en la VLAN 5 otra salida fuera del servidor para tener acceso vía LAN, sin embargo aprovecharemos la conexión temporal que le permite acceder a internet, que se encuentra en la misma red que nuestros equipos, para ser más precisos, la IP 172.18.66.221.
+
+Empezamos descargando el certificado de administrador que nos permitirá acceder a la admin web donde realizar las configuraciones necesarias. Para ello accedemos a \texttt{https://172.18.66.221:8443/ejbca/ra/enrollwithusername.xhtml}, y como se puede observar en la imagen \ref{fig:superadmin_enroll} nos pide credenciales.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/superadmin_enroll.png}
+    \caption{Obtención certificado de administración de EJBCA}
+    \label{fig:superadmin_enroll}
+\end{figure}
+
+Como no cambiamos en el Docker-Compose las credenciales por defecto, las ingresamos en este punto siendo \textit{superadmin} de usuario, y \textit{Bitnami1234} de contraseña.
+A continuación nos pregunta el algoritmo deseado para el certificado, seleccionamos RSA-2048, y finalmente la opción para descargar el PKCS\#12.
+
+Con eso se habrá descargado un archivo de extensión \texttt{.p12}.
+Este archivo es el certificado del \textit{superadmin} que tendremos que ingresar en nuestro navegador. Para hacerlo en Firefox:
+
+\begin{enumerate}
+    \item En el menú de Firefox entrar a \textit{Preferencias}.
+    \item Seleccionar \textit{Privacidad y Seguridad}.
+    \item Seleccionar \textit{Ver Certificados}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ff_import.png}
+    \caption{Gestor de certificados de Firefox}
+    \label{fig:ff_import}
+\end{figure}
+
+    \item En la pestaña de \textit{Tus Certificados} apretar \textit{Importar}.
+    \item Seleccionar el archivo \textit{superadmin.p12} e ingresar la misma contraseña del enrollment, luego aceptar.
+    \item Verificar en la pestaña de \textit{Tus Certificados} que se haya agregado el certificado correctamente, y apretar \textit{Ok}.
+    
+\end{enumerate}
+
+En el navegador pondremos la URL \texttt{https://172.18.66.221:8443/ejbca/adminweb/} y habremos podido acceder a la pagina de administración, donde tenemos a nuestro alcance todas las opciones de configuración para configurar un PKI y poder emitir certificados.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ca_ui.png}
+    \caption{Interfaz Gráfica de la Admin Web}
+    \label{fig:ca_ui}
+\end{figure}
+
+\subsubsection{Generar claves privadas para la CA dentro de SoftHSM}
+
+EJBCA admite varios módulos de seguridad de hardware (HSM) y cada HSM tiene su propia interfaz específica para la generación y el mantenimiento de claves.
+
+Se pueden administrar tokens criptográficos completamente en la GUI o CLI de administración de EJBCA. La GUI de administración muestra automáticamente los HSM disponibles en nuestro sistema. Al crear un nuevo token criptográfico ofrece las opciones para seleccionar entre tokens criptográficos PKCS\#12(soft)  y PKCS\#11(HSM). La opción PKCS\#11 solo está disponible si EJBCA puede encontrar algún módulo PKCS\#11 conocido en el sistema. Si EJBCA encuentra módulos PKCS\#11 conocidos, puede seleccionar PKCS\#11 como tipo de token.
+
+Para poder hacer uso de la opción de crear las claves dentro del SoftHSM fue que se realizo el trabajo de incluir su instalación dentro del contenedor en la sección \nameref{sec:instalacion_ejbca_cocker_softhsm}.
+
+Lo primero que hacemos es crear un \textit{Crypto Token}. Para ello dentro de la \textit{Admin Web} del EJBCA, nos dirigimos a \textit{Crypto Token} dentro de las opciones ofrecidas en \textit{CA Functions}.
+
+Una vez allí, apretamos \textit{Create new}, y aquí es donde podremos elegir nuestro slot. Si no apareciera, es posible que sea necesario reiniciar el navegador y el framework.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/new_crypto_token.png}
+    \caption{new crypto token}
+    \label{fig:new_crypto_token}
+\end{figure}
+
+En la imagen \ref{fig:new_crypto_token} podemos ver las distintas opciones que nos ofrece a utilizar, donde:
+
+\begin{itemize}
+    \item En \textit{Name} podemos ingresar el nombre que queramos que nuestro Crypto Token tenga.
+    \item En \textit{Type} cambiamos la opción por defecto \textit{Soft} a \textit{PKCS\#11}.
+    \item En \textit{Authentication Code} debemos poner el PIN que ingresamos cuando inicializamos nuestro slot dentro del Dockerfile en \ref{cod:softhsm_docker}.
+    \item Seleccionamos la opción de \textit{Auto-activation}.
+    \item En \textit{PKCS\#11: Library} elegimos nuestro HSM
+    \item En \textit{PKCS\#11: Reference Type} elegimos \textit{Slot/Token Label}
+    \item En \textit{PKCS\#11: Reference} elegimos nuestro slot
+\end{itemize}
+
+A continuación apretamos en \textit{Save} y debería abrirse una página como la siguiente:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/crypto_token_creado.png}
+    \caption{Crypto Token creado}
+    \label{fig:crypto_token_creado}
+\end{figure}
+
+Como se muestra en la imagen \ref{fig:crypto_token_creado}, podemos crear dentro del slot, los pares de claves que queremos tener en nuestro CA. En la creación del CA, podemos elegir hasta 4 claves: \textit{defaultKey}, \textit{certSignKey}, \textit{keyEncriptKey} y \textit{testKey}. Procedemos a crear las claves que creemos convenientes, en este caso se puede ver que ya creamos una \textit{encryptKey} y \textit{signKey}, para el encriptado de claves y la firma de certificados respectivamente.
+
+\subsubsection{Creación de CA}
+
+Para crear la CA, nos dirigimos a \textit{Certification Authorities} en las opciones de \textit{CA Functions}, y en la opción de \textit{Add CA}, ingresamos el nombre que tendrá el CA creado, y apretamos en \textit{Create...}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/add_ca.png}
+    \caption{Crear una nueva CA de nombre PSI-CA}
+    \label{fig:add_ca}
+\end{figure}
+
+En este punto nos permite especificar los detalles que definen a nuestra CA, para nombrar las más importantes que nos aseguramos de configurar:
+
+\begin{itemize}
+    \item \textbf{CA Type}: Nos da a elegir que tipos de certificados emitirá la CA, permitiendo seleccionar entre \textit{X.509 CA} y \textit{CVC CA}.
+    \begin{itemize}
+        \item Seleccionamos X.509 CA.
+    \end{itemize}
+    \item \textbf{Crypto Token}: En caso de querer utilizar un \textit{Crypto Token} para nuestra CA, nos permite elegir uno.
+    \begin{itemize}
+        \item Elegimos el \textit{Crypto Token} recién creado ''PSI CryptoToken".
+    \end{itemize}
+    \item \textbf{Signing Algorithm}: Nos permite elegir entre distintos tipos de algoritmos que utilizará la CA para firmar.
+    \begin{itemize}
+        \item Dejamos el valor por defecto \textit{SHA256WithRSA}, lo que implica que primero hará un hash SHA-256 sobre el contenido del certificado, y luego utilizara la clave privada RSA de la CA para firmar dicho hash.
+    \end{itemize}
+    \item \textbf{defaultKey}: Clave por defecto que usará la CA, si se le pide firmar algo sin especificar cual utilizar.
+    \begin{itemize}
+        \item Se elige \textit{encryptKey} creado en nuestro \textit{Crypto Token}.
+    \end{itemize}
+    \item \textbf{certSignKey}: La clave principal que usará la CA para firmar los certificados digitales que emita.
+    \begin{itemize}
+        \item Se elige \textit{signKey} creado en nuestro \textit{Crypto Token}.
+    \end{itemize}
+    \item \textbf{crlSignKey}: Clave para firmar CRLs
+    \begin{itemize}
+        \item Se elige \textit{signKey} creado en nuestro \textit{Crypto Token}.
+        \item Si se quisiera, se podría haber creado una clave especifica para este propósito.
+    \end{itemize}
+    \item \textbf{keyEncryptKey}: Clave usada para el encriptado de claves privadas o datos sensibles.
+    \begin{itemize}
+        \item Se elige \textit{encryptKey} creado en nuestro \textit{Crypto Token}.
+    \end{itemize}
+    \item \textbf{testKey}: Clave de pruebas.
+    \begin{itemize}
+        \item Se elige \textit{encryptKey} creado en nuestro \textit{Crypto Token}.
+        \item Si se quisiera, se podría haber creado una clave especifica para este propósito.
+    \end{itemize}
+    \item \textbf{Signed By} y \textbf{Certificate Profile}: Nos permite elegir como estará firmado el certificado de la CA, y que perfil de certificado será.
+    \begin{itemize}
+        \item Seleccionamos que sera firmado \textit{Self Signed}, lo que implica que se firmará así mismo dado que al ser la CA primaría no depende de otra CA, lo cual se ve reforzado seleccionando luego \textit{ROOTCA} en el perfil de certificado el cual esta preparado para una CA raíz.
+    \end{itemize}
+    \item \textbf{Validity}: Durante cuanto tiempo será valido el certificado de la CA.
+    \begin{itemize}
+        \item Seleccionamos de valor \textit{10y} lo que equivale a 10 años, tiempo de sobra para nuestro proyecto, en casos reales es más común encontrar valores entre los 15 y 25 años.
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/config_ca.png}
+    \caption{Configuración de la CA PSI-CA}
+    \label{fig:config_ca}
+\end{figure}
+
+\subsubsection{Certificate Profiles y End Entity Profiles}
+
+Antes de emitir un certificado, se deben tener en cuenta dos perfiles, \textit{Certificate Profiles} ó Perfiles de Certificados, que explicita como serán los certificados emitidos, y los \textit{End Entity Profiles} ó Perfiles de Entidad Final, que definen quien puede solicitar un certificado, y que información deberá proporcionar para los mismos.
+
+Por defecto ya se encuentran 5 CP creados, y se pueden encontrar en \textit{Certificate Profiles} en las opciones de \textit{CA Functions} como puede verse en la imagen \ref{fig:/Certificate_profiles}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Certificate_profiles.png}
+    \caption{Perfiles de certificados configurados por defecto}
+    \label{fig:/Certificate_profiles}
+\end{figure}
+
+Para la emisión de certificados de los técnicos, no crearemos un CP nuevo, si no que utilizaremos el de nombre \textit{ENDUSER} ó Usuario Final, dado que la configuración que tiene es la que necesitamos para nuestro proyecto, \href{https://doc.primekey.com/ejbca/ejbca-operations/ejbca-ca-concept-guide/certificate-profiles-overview/certificate-profile-fields}{siendo estos}:
+
+\begin{itemize}
+    \item \textbf{Type:} Que tipo de certificado se emitirá con este perfil, dando como opciones entidad final, CA Raíz o CA secundaria.
+    \begin{itemize}
+        \item Viene seleccionado por defecto entidad final.
+    \end{itemize}
+    \item \textbf{Available Key Algorithms:} Que tipo de algoritmo de encriptación se usara.
+    \begin{itemize}
+        \item Por defecto viene con todas las opciones posibles seleccionadas, lo que significa que puede ser elegida cualquiera de ellas a la hora de emitir el certificado que utilice este perfil.
+        \item En una configuración personalizada, se podría haber seleccionado tan solo RSA.
+    \end{itemize}
+    \item \textbf{Available Bit Lengths:} De que largo sera la encriptación que usara el algoritmo seleccionado en la opción anterior.
+    \begin{itemize}
+        \item Por defecto viene con todas las opciones posibles seleccionadas, lo que significa que puede ser elegida cualquiera de ellas a la hora de emitir el certificado que utilice este perfil.
+        \item En una configuración personalizada, se podría haber seleccionado tan solo 2048.
+    \end{itemize}
+    \item \textbf{Validity or end date of the certificate:} Permite seleccionar hasta cuando serán validos los certificados, tanto poniendo una fecha específica, o cuanto tiempo deberá pasar desde la emisión de un certificado.
+    \begin{itemize}
+        \item Por defecto viene configurado para que la validez sea de 2 años desde emisión del certificado.
+    \end{itemize}
+    \item \textbf{Use Certificate Storage:} Esta opción permite habilitar o deshabilitar la posibilidad de que los certificados emitidos sean almacenados en la base de datos. En caso de que este habilitado, los mismos podrán ser recuperados cada vez que se los solicite, o información sobre su revocación, mientras que si se deshabilita se convertirán en certificados efímeros.
+    \begin{itemize}
+        \item Por defecto viene habilitado, lo que nos permitirá recuperar la información del certificado para el servicio de autenticación.
+    \end{itemize}
+    \item \textbf{Store Certificate Data:} Esta opción permite habilitar o deshabilitar el guardado de datos de los certificados, sin guardar los certificados mismos. \textit{Use Certificate Storage} deberá estar activo para que esta opción tenga efecto, y en caso de deshabilitar \textit{Store Certificate Data}, será imposible recuperar cualquier tipo de información sobre los certificados emitidos ó verificar su validez. 
+    \begin{itemize}
+        \item Por defecto viene habilitado.
+    \end{itemize}
+    \item \textbf{Key Usage:} Define cual es el propósito sugerido del certificado.
+    \begin{itemize}
+        \item Por defecto viene habilitado y seleccionado como crítico, y en cuanto a los propósitos esperados se encuentra firma digital, encriptación de clave y de no repudio
+    \end{itemize}
+    \item \textbf{Extended Key Usage:} Especifica para que esta permitido el uso del certificado.
+    \begin{itemize}
+        \item Por defecto viene activado, y los usos seleccionados son de autenticación de cliente, y protección de mail electrónico.
+    \end{itemize}
+    \item \textbf{Available CAs:} Especifica que CA puede emitir un certificado usando este perfil.
+    \begin{itemize}
+        \item Por defecto permite a cualquier CA en nuestra instacia de EJBCA emitir un certificado utilizando este perfil.
+    \end{itemize}
+\end{itemize}
+
+Teniendo ya el CP a usar, avanzamos con la creación de un EEP, para ello nos dirigimos a \textit{End Entity Profiles} en las opciones de \textit{RA Functions}. Al seleccionarlo, se nos abre una página similar al de \textit{Certification Authorities} que contendrá por defecto un EPP de nombre \textit{EMPTY}, y en la parte inferior, una caja como el de la imagen \ref{fig:add_ca} con el título \textit{Add End Entity Profile}, donde poner el nombre que tendrá nuestro EPP. En este caso a modo de ejemplo ingresamos \textit{Personal PSI} y luego apretamos en \textit{Add Profile}. Al hacerlo se añaden arriba en la lista de perfiles, como se puede ver en la imagen \ref{fig:/list_eep}:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/list_eep.png}
+    \caption{Lista de perfiles de entidades finales}
+    \label{fig:/list_eep}
+\end{figure}
+
+Ahora apretamos en nuestro EEP recién creado, y luego en \textit{Edit End Entity Profile} para realizarle las \href{https://doc.primekey.com/ejbca/ejbca-operations/ejbca-ca-concept-guide/end-entities-overview/end-entity-profiles-overview/end-entity-profiles-fields}{configuraciones correspondientes}, donde:
+
+\begin{itemize}
+    \item \textbf{Password (or Enrollment Code):} Este campo esta para especificar una contraseña a poner a la hora de solicitar un certificado nuevo. Se puede seleccionar para que sea requerido o no, ademas de que pueda ser uno generado automáticamente.
+    \begin{itemize}
+        \item Dejamos el valor por defecto, donde deja el campo vacío, pero requiere que se ingrese uno.
+        \item A la hora de operar se podría solicitar al técnico que diga que contraseña quiere, o elegirle uno y luego entregarlo.
+    \end{itemize}
+    \item \textbf{End Entity E-mail:} Permite especificar si hará uso de una dirección de correo de los técnicos, y cual es. Escribiendo en el campo de texto se puede poner un dominio por defecto, permite especificar si es requerido o no, y la opción de que sea modificable.
+    \begin{itemize}
+        \item Dejamos las configuraciones por defecto, donde esta especificado que se puede usar esta opción, de manera modificable, pero no requerido de manera obligatoria.
+    \end{itemize}
+    \item \textbf{Subject DN Attributes:} Aquí se define cuales son los componentes de DN que deben estar presentes de la entidad final.
+    \begin{itemize}
+        \item Por defecto viene con el campo Common name, el cual dejamos para ingresar el nombre de los técnicos, y como se puede observar en la imagen \ref{fig:/subject_dn}, le agregamos Role para poner el rol que cumple el destinatario del certificado dentro de la organización, y para la dirección de correo.
+    \end{itemize}
+    \item \textbf{Default Certificate Profile y Available Certificate Profiles:} El primero permite especificar cual sera el CP que se encontrará seleccionado por defecto a la hora de emitir un certificado, mientras que el segundo permite agregar los distintos CP que podrían utilizarse junto al EEP en cuestión.
+    \begin{itemize}
+        \item En ambos dejamos solamente \textit{ENDUSER}.
+    \end{itemize}
+    \item \textbf{Default CA y Available CAs:} El primero permite especificar que CA se encontrara seleccionado por defecto a la hora de emitir un certificado, mientras que el segundo permite agregar los distintos CA que podrían emitir un certificado usando este EEP.
+    \begin{itemize}
+        \item En ambos dejamos solamente \textit{PSI-CA}.
+    \end{itemize}
+    \item \textbf{Default Token y Available Tokens:} Al hablar de token, estas opciones se refieren a la generación del par de claves, y como EJBCA entregara luego las claves o el certificado al usuario. La primera opción permite especificar cual sera la que se encuentre seleccionada por defecto, mientras la segunda permite agregar las distintas opciones que podrán ser seleccionables.
+    \begin{itemize}
+        \item Se dejan los valores por defecto, donde generado por el usuario queda como opción por defecto, y todas las demás se encontraran disponibles para seleccionar.
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/subject_dn.png}
+    \caption{Lista de DN configurados para el perfil de entidad final Personal PSI}
+    \label{fig:/subject_dn}
+\end{figure}
+
+\subsubsection{Emitisión y Revocación de Certificados}
+
+Con las configuraciones hechas hasta ahora, ya tenemos todo lo necesario para poder emitir los certificados X.509 que usaremos en el resto del proyecto.
+
+Para emitir un certificado de prueba, podemos hacer click la opción \textit{RA Web}, o usando su URL \texttt{https://172.18.66.221:8443/ejbca/ra}, y de esa forma ganaremos acceso a la página preparada para las funciones de una RA, principalmente la emisión, consulta o revocación de certificados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ra_web.png}
+    \caption{Menú de inicio de la RA Web}
+    \label{fig:/ra_web}
+\end{figure}
+
+Para emitir un certificado, seleccionamos \textit{Make New Request}, y nos ofrecerá elegir que CP, EEP y CA utilizar, como se ve en la imagen \ref{fig:/ra_new} seleccionamos los que hemos creado, y luego nos pregunta si el par de claves sera generado por la CA o si el usuario va a ingresar manualmente sus clave.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ra_new.png}
+    \caption{Menú donde se elige como sera el nuevo certificado a emitir}
+    \label{fig:/ra_new}
+\end{figure}
+
+En esta instancia de prueba elegimos que la clave sea generada por la CA, pero tal y como definimos en los requerimientos, la clave privada del usuario debe ser generada en el equipo del técnico, y no ser movida de allí, por lo que para usar nuestro sistema, usaremos la opción de provisto por el usuario.
+
+Una vez elegida esta opción, nos solicita la información propia del certificado, y del usuario:
+
+\begin{itemize}
+    \item \textbf{Key algorithm}: Seleccionamos RSA 2048.
+    \item \textbf{Common Name}: Nombre cualquiera de prueba 
+    \item \textbf{Role}: Rol cualquiera que pudiera tener un miembro
+    \item \textbf{Username}: Un nombre de usuario, ponemos el mismo que el CN 
+    \item \textbf{Enrollment code}: Ó contraseña, se puede poner uno cualquiera, ingresamos el mismo que el nombre del usuario.
+    \item \textbf{Email}: Es opcional, así que no ponemos ninguno. 
+\end{itemize}
+
+Finalmente, al final de la página se presentaran 4 opciones: \textit{Download JKS}, \textit{Download PKCS\#12}, \textit{Download BCFKS} \textit{Download PEM}. Estas opciones nos solicitan el formato con el que emitir el certificado, una vez seleccionada esta opción, se nos descarga el certificado en nuestro equipo, y finaliza el proceso de emisión.
+
+Se elige \textit{Download PKCS\#12}, y revisamos que la información introducida se encuentra correctamente en nuestro certificado. Mediante comandos de OpenSSL se pueden recuperar tanto la clave pública como la clave privada que la CA ha generado para firmar este certificado, así que no debe ser compartido por quien lo recibe.
+
+Si se quiere ver los certificados emitidos, estos se pueden encontrar entrando a \textit{Certificates} dentro de las opciones de \textit{Search}, donde se puede ver una página como el de la figura \ref{fig:/search_certificates}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/search_certificates.png}
+    \caption{Listado de los certificados emitidos por nuestra instancia de EJBCA dentro de la RA Web}
+    \label{fig:/search_certificates}
+\end{figure}
+
+Y al seleccionar {View} en uno de ellos, muestra una página como el de la figura \ref{fig:/view_certificate}, donde presenta la información del certificado, así como la posibilidad de revocarlo, eligiendo el motivo por el cual se lo esta haciendo. Ademas ofrece la posibilidad de descargar nuevamente el certificado, aunque ya no permite hacerlo como PKCS\#12.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/view_certificate.png}
+    \caption{Página de un certificado emitido dentro de la RA Web, con información del mismo, y la opción de revocarlo}
+    \label{fig:/view_certificate}
+\end{figure}
+
+\subsubsection{Emitir certificado haciendo uso de un CSR}
+
+Como se hizo mención con anterioridad, aunque puede emitirse un certificado desde la RA Web, permitiendo que el par de claves sean creados por la CA, en este proyecto se propone que el par de claves no deben salir del equipo del técnico, y para poder emitir un certificado con esa restricción, debe hacerse a partir de un CSR.
+
+Para esto, junto al SoftHSM configurado anteriormente, es necesario tener instalado OpenSSL y OpenSC, para ello:
+
+\begin{lstlisting}[language=Bash, caption={Instalación OpenSSL y OpenSC}, label={cod:instalación_openssl_opensc}, captionpos=b]
+sudo apt install opensc
+sudo apt -y install openssl libengine-pkcs11-openssl
+\end{lstlisting}
+
+El siguiente paso, es crear el par de claves dentro del slot del SoftHSM configurado en \nameref{sec:softhsm_install}, para ello:
+
+\begin{lstlisting}[language=Bash, caption={Creación par de claves dentro del slot de SoftHSM}, label={cod:crear_pki_softhsm}, captionpos=b]
+pkcs11-tool --module=/usr/lib/softhsm/libsofthsm2.so --token-label <NAME> --login --pin <PIN> --keypairgen --mechanism RSA-PKCS-KEY-PAIR-GEN --key-type RSA:2048 --usage-sign --label <keyNAME> --id <NUMERO>
+\end{lstlisting}
+
+Donde \textless{}NAME\textgreater{} y \textless{}PIN\textgreater{} corresponden al slot y su contraseña establecidos anteriormente. La referencia \textless{}keyNAME\textgreater{} se debe reemplazarla por el nombre que identificará la llave y \textless{}NÚMERO\textgreater{} debe ser conmutado por un número único dentro del slot que no exista anteriormente. En caso de éxito obtendremos una salida como la que se puede ver en la imagen \ref{fig:/crear_pki_softhsm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/crear_pki_softhsm.png}
+    \caption{Creación exitosa de un par de claves dentro de un slot del SoftHSM}
+    \label{fig:/crear_pki_softhsm}
+\end{figure}
+
+Es importante notar, que en los comandos presentados, en la parte de module, en el sistema utilizado, \textit{libsofthsm2.so} se encuentra en la dirección utilizada en el ejemplo, pero en la documentación aparece como \texttt{/usr/local/lib/softhsm/libsofthsm2.so}, por lo que es necesario ubicarlo primero en el dispositivo que se lo utilice. 
+
+Es posible comprobar qué se encuentra dentro del slot utilizando el comando:
+
+\begin{lstlisting}[language=Bash, caption={Consultar contenido de slot dentro de SoftHSM}, label={cod:consultar_contenido_softhsm}, captionpos=b]
+pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so --token-label <NAME> --pin <PIN> -O
+\end{lstlisting}
+
+Utilizando este comando, obtendremos una respuesta similar al de la imagen \ref{fig:/crear_pki_softhsm}. Si se ingresa a la CLI del contenedor de EJBCA, es posible utilizar utilizar este comando de igual forma para consultar sobre las claves generadas dentro del \textit{Crypto Token}.
+
+A continuación se debe configurar OpenSSL para poder utilizarlo junto a PKCS11. El archivo de configuración que utiliza, debería encontrarse en \texttt{/etc/ssl/openssl.cnf}, si no se encuentra allí se debe buscar donde. Se reemplaza el contenido de este archivo con:
+
+\begin{lstlisting}[language=Bash, caption={Configuración OpenSSL para operar junto a PKCS11}, label={cod:config_openssl_para_pkcs11}, captionpos=b]
+openssl_conf = openssl_init
+
+[openssl_init]
+engines=engine_section
+
+[engine_section]
+pkcs11 = pkcs11_section
+
+[pkcs11_section]
+engine_id = pkcs11
+dynamic_path = /usr/lib/x86_64-linux-gnu/engines-1.1/libpkcs11.so
+MODULE_PATH = /usr/lib/softhsm/libsofthsm2.so
+init = <SLOT>
+PIN = <PIN>
+\end{lstlisting}
+
+Teniendo en cuenta que en \textit{dynamic\_path} y \textit{MODULE\_PATH} puede cambiar según el sistema operativo, y según el HSM que se utilice (El \textit{MODULE\_PATH} apunta a la librería del HSM utilizado, en este caso SoftHSM2).
+
+Vale la pena notar que \textit{MODULE\_PATH} apunta a la misma dirección que \textit{module} en los comandos utilizados anteriormente para crear el par de claves, cuya función es la de consultar al slot de SoftHSM. Por otro lado, es posible también que con \textit{dynamic\_path} suceda algo similar de encontrarse en otra ubicación, como por ejemplo \texttt{/usr/lib/x86\_64-linux-gnu/engines-3/libpkcs11.so}.
+
+Finalmente se encuentra \textit{init} y \textit{PIN}, donde el primero hace referencia al numero de slot, el cual puede obtenerse haciendo uso del comando \ref{cod:show_slots}, como se puede ver en la imagen \ref{fig:show_slots} luego del identificador \textit{Slot}, y \textit{PIN} la contraseña ingresada al crear el slot.
+
+A continuación, ubicados en una nueva carpeta destinada especialmente a la creación de certificados, se debe crear un archivo \textit{csr.conf}. Este archivo contendrá la información de usuario que solicita un certificado para ser emitido, y debe estar estructurado para cumplir con el formato configurado en el CP y EEP.
+
+Por ello, dentro de este archivo, debe pegarse el siguiente código:
+
+\begin{lstlisting}[language=Bash, caption={Preset de csr.conf para un certificado que cumpla con el CP ENDUSER y EEP Personal PSI}, label={cod:csr.conf}, captionpos=b]
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = <CN del usuario>
+E = <Email del usuario>
+Role = <Rol del usuario>
+
+[v3_req]
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection 
+\end{lstlisting}
+
+Debajo del apartado \textbf{[req\_distinguished\_name]} se ubican los campos seleccionados como requeridos en el perfil de entidad final, donde:
+
+\begin{itemize}
+    \item \textbf{CN}: El Common Name, donde en  \textless{}CN del usuario\textgreater{} se reemplaza por el nombre completo del usuario, u otro identificador que se decida utilizar.
+    \begin{itemize}
+        \item En el ejemplo de la imagen \ref{fig:/view_certificate} el valor puesto sería \textit{Seba}.
+    \end{itemize}
+    \item \textbf{E}: Identificador del correo electrónico, donde en  \textless{}Email del usuario\textgreater{} se reemplaza por el correo del usuario.
+    \begin{itemize}
+        \item En el ejemplo de la imagen \ref{fig:/view_certificate} el valor puesto sería \textit{seba@gmail.com}.
+        \item Dado que esta opción no es requerida, podría también optarse por no incluirla.
+    \end{itemize}
+    \item \textbf{Role}: Rol cualquiera que pudiera tener, donde en  \textless{}Rol del usuario\textgreater{} se reemplaza por el rol del usuario.
+    \begin{itemize}
+        \item En el ejemplo de la imagen \ref{fig:/view_certificate} el valor puesto sería \textit{destino1}.
+    \end{itemize}
+\end{itemize}
+
+Debajo del apartado \textbf{[v3\_req]} se ubican los campos seleccionados para \textit{Key Usage} y \textit{Extended Key Usage} en el perfil de certificado \textit{ENDUSER}.
+
+Es importante mecionar que si estos campos no coinciden, el proceso de emisión de certificado fallará.
+
+Con el csr.conf ya creado y configurado, se lo firma utilizando la clave generada dentro del SoftHSM haciendo uso del comando:
+
+\begin{lstlisting}[language=Bash, caption={Firmado de csr.conf con clave generada dentro de SoftHSM}, label={cod:firmado_csr.conf}, captionpos=b]
+openssl req -engine pkcs11 -keyform engine -key <SLOT:ID> -new -sha512  -out <NAME.csr> -config <csr.conf>
+\end{lstlisting}
+
+Donde \textless{}SLOT:ID\textgreater{} hace referencia el primero al numero de slot como se ingreso en \textit{init} en la configuración del csr.conf, y el segundo al numero de ID ingresado a la hora de crear el par de claves dentro del SLOT, bajo la leyenda \textless{}NUMERO\textgreater{} en el comando \ref{cod:crear_pki_softhsm}, el cual puede ser consultado usando el comando \ref{cod:consultar_contenido_softhsm} luego del identificador \textit{ID:}.
+
+Por su parte \textless{}NAME.csr\textgreater{} es el nombre con el que se va a general el nuevo CSR firmado, y \textless{}csr.conf\textgreater{} el nombre, con ubicación si hiciera falta, del archivo de configuración para el CSR.
+
+Cuando hablamos de firmado del CSR con las claves en SoftHSM es importante mencionar que el proceso que sigue el comando \ref{cod:firmado_csr.conf}, es el de ingresar el csr.conf al HSM, y firmarlo con la clave privada que se encuentra allí, y luego generar un nuevo archivo \textless{}NAME.csr\textgreater{} por fuera del SoftHSM, sin exponer en ningún momento el par de claves.
+
+Tiene valor destacar que en el comando \ref{cod:firmado_csr.conf}, en lugar de hacer funcionar al motor con las claves generadas dentro del SoftHSM, se podría haber generado un par de claves nuevas dentro de la misma carpeta, como se muestra en el comando \ref{cod:firmado_csr.conf_pki_nueva}, o indicarle donde encontrarlas dentro del equipo, en caso de no querer hacer uso de SoftHSM y haberlas generado mediante un método parecido al de \ref{cod:crear_par_claves_cli}
+
+\begin{lstlisting}[language=Bash, caption={Firmado de csr.conf con clave creada en el mismo comando}, label={cod:firmado_csr.conf_pki_nueva}, captionpos=b]
+openssl req -new -out server.csr -newkey rsa:2048 \\
+            -nodes -sha256 -keyout server.key \\
+            -config csr.conf
+\end{lstlisting}
+
+Con nuestro CSR ya firmado, dentro de la RA Web en la opción de emisión de un nuevo certificado, seleccionando que el par de claves va a ser provisto por el usuario, permite cargar un CSR como puede verse en la imagen \ref{fig:Cargar_CSR}, y emitir de esta forma el certificado, manteniendo la clave privada resguardada y sin que sea movida luego de haber sido generada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Cargar_CSR.png}
+    \caption{Cargar CSR firmado en la RA Web para la emisión de un nuevo certificado}
+    \label{fig:Cargar_CSR}
+\end{figure}
+
+Luego pedirá datos como \textit{Enrollment Code} y usuario al igual que en el caso de que el par de claves sea generada por la CA, aunque ya no pedirá los datos ingresados en el CSR mismo, y finalmente permite la descarga del nuevo certificado.
+
+Previo a la emisión de un certificado, será responsabilidad del encargado de la emisión de nuevos certificados, corroborar que la información que se encuentra en el CSR sea correcta, que el solicitante sea el destinatario legítimo del certificado y que los valores incluidos en el CSR sean los adecuados.
+
+\subsection{Conclusión}
+
+Al finalizar con esta iteración, contamos con una VM que contiene una instancia de EJBCA dockerizada, que se encuentra configurado con una CA con su par de claves resguardados en un SoftHSM, con un \textit{End Entity Profile} y \textit{Certificate Profile} que responde a nuestras necesidades para el proyecto, y con su base de datos persistente en un docker aparte.
+
+Adicionalmente, se cuenta con una página web con interfaz gráfica que facilita la emisión y revocación de certificados, aún sin contar con conocimientos técnicos.
+
+Finalmente, se detallaron los pasos necesarios para emitir un certificado, teniendo el par de claves del usuario resguardados en un HSM dentro de su equipo personal, sin exponerlo en ningún momento.
+
+Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
+
+\begin{itemize}
+    \item \textbf{REQ\_F\_SYA\_3:}
+    \begin{itemize}
+        \item Al crear la clave dentro de un HSM, la misma no puede trasladada una vez fue creada.
+    \end{itemize}
+    \item \textbf{REQ\_F\_SYA\_4:}
+    \begin{itemize}
+        \item Emitiendo los certificados en base a un CSR firmado otorgado por el usuario, ni los servidores ni la AR tendrán acceso en ningún momento a la clave privada de los usuarios.
+    \end{itemize}
+    \item \textbf{REQ\_F\_SYA\_8:}
+    \begin{itemize}
+        \item Habiendo generado la clave privada en el dispositivo del usuario, el mismo posee la clave con la firma el CSR para la emisión de su certificado.
+    \end{itemize}
+    \item \textbf{REQ\_F\_IUS\_1:}
+    \begin{itemize}
+        \item Una vez las configuraciones fueron realizadas en el equipo del usuario, el mismo tan solo necesita modificar los datos del csr.conf con su información para generar el CSR y posteriormente su certificado.
+    \end{itemize}
+    \item \textbf{REQ\_F\_IUS\_2:}
+    \begin{itemize}
+        \item En esta iteración se detallaron los pasos para la instalación de un SoftHSM, y posteriormente la generación del par de claves dentro del mismo.
+    \end{itemize}
+    \item \textbf{REQ\_F\_PKI\_1:}
+    \begin{itemize}
+        \item La CA creada en esta iteración se encargara de emitir los certificados a utilizar, de reportar su estado, y de revocarlos si correspondiera.
+    \end{itemize}
+    \item \textbf{REQ\_F\_PKI\_2:}
+    \begin{itemize}
+        \item EJBCA cuenta con la posibilidad de verificar la validez de los certificados que emite.
+    \end{itemize}
+    \item \textbf{REQ\_F\_PKI\_3:}
+    \begin{itemize}
+        \item Desde la \textit{RA Web} se puede revocar certificados al seleccionar la opción correspondiente, y el motivo  por el cual se revoca.
+    \end{itemize}
+    \item \textbf{REQ\_F\_PKI\_4:}
+    \begin{itemize}
+        \item Se configuró un SoftHSM en el docker, y luego al crear la CA se lo utilizó para almacenar las claves.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_2:}
+    \begin{itemize}
+        \item Las facilidades proporcionadas por la interfaz web que ofrece EJBCA, hace posible que estando ya todo configurado, pueda ser enseñado las tareas de emisión y revocación de certificados a una persona sin conocimientos previos del tema en el tiempo propuesto.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_9:}
+    \begin{itemize}
+        \item En la iteración anterior se trabajo sobre este requerimiento proporcionando los medios para que la VM se encontrara disponible siempre y cuando no hubiera un evento externo, en cuyo caso existen medidas para que levante nuevamente de manera automática, en esta iteración se suma además el hacer que los docker levanten automáticamente al iniciar el sistema.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_10:}
+    \begin{itemize}
+        \item Se cumple con el requerimiento de utilizar herramientas Open Source, dado que esa es la naturaleza de las distintas partes trabajadas en esta iteración, tanto el SO Ubuntu, como EJBCA Community y SoftHSM. 
+    \end{itemize}
+    \item \textbf{REQ\_NF\_12:}
+    \begin{itemize}
+        \item Al configurar EJBCA y nuestra CA para emitir certificados X.509, nos aseguramos de que estos sean los utilizados por el sistema.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_14:}
+    \begin{itemize}
+        \item Se cumple el requerimiento al utilizar el perfil de certificado con todas las opciones posibles, y seleccionando efectivamente en la emisión de nuevos certificados la opción RSA-2048.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_15:}
+    \begin{itemize}
+        \item Se cumple el requerimiento al configurar la CA con un par de claves que utilizan el cifrado RSA-2048.
+    \end{itemize}
+    \item \textbf{REQ\_NF\_16:}
+    \begin{itemize}
+        \item En la configuración del perfil de certificado a emitir, se encuentra especificada la validez de los certificados en 2 año.
+    \end{itemize}
+\end{itemize}
+
+\section{Iteración 3: Configuración autenticación con herramientas OpenSSH}
+
+\subsection{Antecedente}
+
+Se cuenta con dos VMs con SO Ubuntu 20.04, el servidor \textit{Bastion} con salida a internet y conexión a la VLAN 7, y el servidor \textit{Destino1} temporalmente de igual manera. A ambos servidores se le instaló OpenSSH durante la configuración del SO.
+
+\subsection{Desarrollo}
+
+Teniendo OpenSSH instalado, el comportamiento de SSH en el servidor es dictado por las opciones que se encuentran configuradas en el archivo \texttt{/etc/ssh/sshd\_config}, las mismas pueden ser encontradas en su \href{https://man.openbsd.org/sshd_config}{manual}, destacando en relevancia para nuestro proyecto:
+
+\begin{itemize}
+    \item \textbf{AllowAgentForwarding}: Especifica que permite el reenvío del agente SSH, por defecto su valor es \textit{Yes}. Esta configuración permite que el agente SSH de mi maquina local pueda ser usado desde un servidor intermedio para autenticarse en otros servidores.
+    \begin{itemize}
+        \item Se deja en su valor positivo por defecto en el servidor Bastion, aunque solo es necesario en caso de usar el modificador -A, para conectarse al servidor destino desde el proxy, y no usar el proxy para conectarse al destino desde la maquina local.
+        \item En cualquier caso, no es necesario considerar esta opción para un servidor destino.
+    \end{itemize}
+    \item \textbf{AllowTcpForwarding}: Permite el reenvío de paquetes TCP, con valor \textit{Yes} por defecto.
+    \begin{itemize}
+        \item Esta opción es importante tenerla activada en el servidor Bastion para poder usarlo de intermediario.
+        \item En cualquier caso, no es necesario considerar esta opción para un servidor destino.
+    \end{itemize}
+    \item \textbf{AuthenticationMethods}: Especifica el método que debe ser usado para la autenticación al servidor, puede ser uno solo o múltiples separados por coma, siendo \textit{password} el valor por defecto.
+    \begin{itemize}
+        \item Este parámetro se modifica en base a las distintas pruebas.
+    \end{itemize}
+    \item \textbf{HostKey} Define la clave privada del servidor que se usa para identificarse ante los clientes SSH, usando por defecto los valores \textit{/etc/ssh/ssh\_host\_ecdsa\_key}, \textit{/etc/ssh/ssh\_host\_ed25519\_key} y \textit{/etc/ssh/ssh\_host\_rsa\_key}.
+    \begin{itemize}
+        \item Estos son las claves que usa un equipo cliente para verificar la identidad del servidor, por lo tanto no tiene relevancia en este trabajo.
+    \end{itemize}
+    \item \textbf{ListenAddress}: Especifica cual es la dirección local que debe escuchar SSH en el servidor.
+    \begin{itemize}
+        \item En cualquier caso, no es necesario considerar esta opción para un servidor Bastion.
+        \item En un servidor destino, se puede configurar para que solo escuche a partir de su IP en la VLAN 7. Esta opción no limita desde que IP se puede conectar, si no a que IP de la misma VM le pueden llegar las solicitudes de acceso.        
+    \end{itemize}
+    \item \textbf{PasswordAuthentication}: Especifica si se permite usar contraseña como autenticación.
+    \begin{itemize}
+        \item Este parámetro se modifica en base a las distintas pruebas.
+    \end{itemize}
+    \item \textbf{PermitEmptyPasswords}: En caso de que se permita la autenticación con contraseña, indica si se permite que la misma sea vacía.
+    \begin{itemize}
+        \item No se permite el ingrso de contraseñas vacias.
+    \end{itemize}
+    \item \textbf{PubkeyAcceptedAlgorithms}: Especifica cuales algoritmos serán aceptables para la autenticación haciendo uso de par de claves.
+    \begin{itemize}
+        \item Se configura para RSA.
+    \end{itemize}
+    \item \textbf{PubkeyAuthentication}: Especifica si se permite la autenticación haciendo uso del método del par de claves.
+    \begin{itemize}
+        \item Este parámetro se modifica en base a las distintas pruebas.
+    \end{itemize}
+    \item \textbf{RequiredRSASize}: Especifica el tamaño mínimo de una clave RSA que se permitirá en un intento de autenticación. Su valor por defecto es \textit{1024}.
+    \begin{itemize}
+        \item Se configura en 2048.
+    \end{itemize}
+    \item \textbf{TCPKeepAlive}: Habilita o deshabilita el envío de mensajes TCP de parte del sistema hacia el otro extremo de la conexión, con el objetivo de desconectar conexiones que se encuentren interrumpidas y evitar sesiones colgadas. Su valor por defecto es \textit{Yes}.
+    \begin{itemize}
+        \item No es necesario, pero no es mala practica para evitar que sesiones colgadas eviten el acceso de nuevos técnicos, por lo que se deja en su valor por defecto positivo.
+    \end{itemize}
+    \item \textbf{MaxSessions}: La cantidad máxima de sesiones permitidas, el valor por defecto es \textit{10}.
+    \begin{itemize}
+        \item En un servidor destino es díficil pensar que más de 10 técnicos se encuentren conectados al mismo tiempo, en cualquier caso es una decisión basada en el flujo de trabajo, sin embargo, en el servidor Bastion si es importante aumentar el valor, dado que cada salto cuenta como una conexión, configurando un valor de \textit{10000} para evitar cualquier inconveniente.
+    \end{itemize}
+    \item \textbf{KbdInteractiveAuthentication}: Un alias para la opción \textbf{ChallengeResponseAuthentication}, especifica si se permite la autenticación donde es necesario interactuar con el teclado. Su valor por defecto es \textit{Yes}.
+    \begin{itemize}
+        \item Este parámetro se modifica en base a las distintas pruebas.
+    \end{itemize}
+    \item \textbf{UsePAM}: Habilita que se use PAM durante la autenticación, por defecto su valor es \textit{Yes}.
+    \begin{itemize}
+        \item Se deja su valor por defecto en positivo, sin importar las pruebas a realizar, dado que el modulo PAM sin modificar, es quien modela el método de acceso por defecto.
+    \end{itemize}
+    \item \textbf{PermitTTY}: Especifica si el usuario puede interactuar con la consola una vez gana acceso vía SSH, por defecto su valor es \textit{Yes}.
+    \begin{itemize}
+        \item Se deja su valor por defecto en positivo para todos los servidores.
+        \item Se podría pensar que si Bastion es un servidor de salto, no debería dejar que haya acceso a la CLI, sin embargo es un servidor al que eventualmente también se podría necesitar acceso, y no sería posible si se le deshabilita esta opción.
+    \end{itemize}
+    \item \textbf{SyslogFacility}: Especifica la ubicación y el tipo de registro de eventos para el servidor SSH. Por defecto, su valor es \textit{AUTH}, lo que permite que los eventos de autenticación se registren en \textit{/var/log/auth.log}.
+    \item \textbf{LogLevel}: Establece el nivel de detalle de los mensajes de log generados por el servidor SSH. El valor por defecto es \textit{INFO}, lo que significa que se registrarán eventos generales de SSH, como inicios de sesión exitosos y fallidos.
+    \begin{itemize}
+        \item Tanto el valor por defecto de \textit{SyslogFacility}, como el de \textit{LogLevel}, son suficientes para cumplir con nuestros requerimientos de logeo para el servicio de SSH.
+    \end{itemize}
+
+\end{itemize}
+
+Teniendo en consideración estas configuraciones, se hizo la prueba de acceder a servidores, primero con el método de clave pública, luego con un certificado SSH emitido por CA casera hecha en consola, y por último haciendo uso del servidor Bastion como proxy.
+
+\subsubsection{Autenticación con par de claves}
+
+Empezamos las pruebas sobre las herramientas que tiene OpenSSH para autenticarse a un servidor, haciendo uso del par de claves.
+
+En primera instancia, en nuestra maquina local creamos el par de claves con el comando \texttt{ssh-keygen}, usando como referencia de mail \textit{bruno.perez@mi.unc.edu.ar}: 
+
+\begin{lstlisting}[language=Bash, caption={Crear par de claves con comando por consola}, label={cod:crear_par_claves_cli}, captionpos=b]
+ssh-keygen -t rsa -C "bruno.perez@mi.unc.edu.ar"
+\end{lstlisting}
+
+Al usar el comando, nos preguntara por ubicación donde guardarlos, y también si queremos una contraseña, ambas son opcionales, lo recomendable es que tenga una contraseña, y que la ubicación se encuentre en \texttt{~/.ssh/}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/crear_claves_cli.png}
+    \caption{Creación par de claves por consola}
+    \label{fig:crear_claves_cli}
+\end{figure}
+
+El comando \texttt{ssh-keygen} viene incluido en el paquete de OpenSSH, si no se tiene instalado, se puede instalar con los siguientes comandos:
+
+\begin{lstlisting}[language=Bash, caption={Instalación OpenSSH}, label={cod:instalar_openssh}, captionpos=b]
+sudo apt update
+sudo apt install openssh-client
+
+#En caso de ser un servidor
+sudo apt install openssh-server
+\end{lstlisting}
+
+Ahora tenemos nuestra clave privada \texttt{id\_rsa} y la pública \texttt{id\_rsa.pub}. Podemos ver cual es nuestra clave pública con el comando \texttt{cat \textasciitilde/.ssh/id\_rsa.pub}.
+
+Para llevar a cabo la primera prueba, usamos al servidor Bastion, y aunque no sea necesario, creamos un usuario de prueba en el mismo de nombre \textit{brunoperez}. Nos cambiamos al usuario recién creado, en su directorio personal, creamos la carpeta \textit{.ssh}, y allí creamos el archivo \texttt{authorized\_keys}, al cual le insertamos nuestra clave pública.
+
+\begin{lstlisting}[language=Bash, caption={Crear usuario, carpeta .ssh y archivo authorized\_keys}, label={cod:crear_usuario_carpeta_ssh_y_authorized_keys}, captionpos=b]
+sudo adduser brunoperez
+su brunoperez
+cd /home/brunoperez
+mkdir .ssh
+cd .ssh
+touch authorized_keys
+echo <Aqui va clave publica> > authorized_keys
+\end{lstlisting}
+
+En este punto es importante notar un requerimiento de permisos de los archivos creados en los últimos pasos, donde \textit{authorized\_keys} debe pertenecer al usuario, en este caso \textit{brunoperez}, y en la maquina local, la carpeta \textit{.ssh} tener permisos 700, es decir lectura, escritura y ejecución tan solo para el propietario. Para la clave privada permisos 600, solo lectura y escritura para el propietario, y finalmente para la pública permisos 644, donde a diferencia de la privada se le otorgan permisos de lectura al grupo y otros.
+
+Por último, nos aseguramos que en el archivo de configuración \textit{/etc/ssh/sshd\_config} se encuentre habilitado el método de clave publica con \texttt{PubkeyAuthentication yes}, y si se quiere limitar métodos de acceso \texttt{AuthenticationMethods publickey}.  En caso de haber modificado la configuración de SSH, se reinicia el proceso con \texttt{sudo systemctl restart ssh}.
+
+A continuación nos conectamos mediante SSH al servidor Bastion, con la salida detallada para ver el comportamiento de la conexión, siendo 172.18.66.248 la IP que tiene Bastion para usar de salida a Internet:
+
+\begin{lstlisting}[language=Bash, caption={Comando para ingreso por SSH con salida detallada}, label={cod:comando_para_ingreso_por_SSH_con_salida_detallada}, captionpos=b]
+ssh -vvv brunoperez@172.18.66.248
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/ssh_keypair_verbose.png}
+    \caption{Salida detalla conexión SSH usando par de claves}
+    \label{fig:ssh_keypair_verbose}
+\end{figure}
+
+En la imagen \ref{fig:ssh_keypair_verbose}, se puede observar que detalla los métodos de autenticación que admite el servidor, en este caso el método de clave pública y contraseña, siendo el primero que intenta el de clave pública. En las lineas siguientes se ve el intercambio de mensajes que realiza al reconocer nuestra clave pública.
+
+Habiendo seguido estos pasos, nos pudimos conectar exitosamente al servidor Bastion, haciendo uso del método de autenticación de clave pública.
+
+En este ejemplo, no hubo necesidad de especificar la ubicación de nuestro par de claves, dado que usamos el nombre y ubicación por defecto. Si quisiéramos especificar la ubicación de mi clave pública, se puede usar el modificador \texttt{-I \textless Ubicación de mi archivo\textgreater}, por ejemplo, para utilizar mi clave generada en el SoftHSM, el comando a utilizar es:
+
+\begin{lstlisting}[language=Bash, caption={Comando para ingreso por SSH con par de claves en SoftHSM}, label={cod:comando_para_ingreso_por_SSH_con_keypar_en_softhsm}, captionpos=b]
+ssh -I /usr/lib/softhsm/libsofthsm2.so brunoperez@172.18.66.248
+\end{lstlisting}
+
+\subsubsection{Autenticación con certificado SSH}
+
+A modo de ejercicio se creo una CA mediante comandos de OpenSSL en la CLI del servidor, y haciendo uso del par de claves creados en \ref{cod:crear_par_claves_cli}, se emitió un certificado SSH. Luego se reconfiguró \textit{/etc/ssh/sshd\_config} para permitir el uso del certificados en la autenticación al servidor a través de SSH, con la prueba de conexión resultando exitosa.
+
+Posteriormente se hizo el intento de reemplazar el certificado SSH por uno X.509 generado en la iteración anterior, y el intento de conexión resulto fallido.
+
+No se desarrolla esta tarea en profundidad, dado que el resultado era el esperado, ya que como se explico en \ref{sec:herramientas_openssh}, el uso de certificados X.509 es una funcionalidad no soportada por OpenSSH, y el objetivo de esta prueba era corroborar un concepto ya conocido.
+
+\subsubsection{Uso de servidor Proxy}
+
+En nuestro sistema se planteó usar el servidor Bastion para llegar al servidor destino, para ello el primer paso es asegurarse de que ambos tengan conexión, lo cual fue resuelto en la instalación y configuración de los servidores.
+
+Para poder hacer uso del servidor Bastion como proxy, nos aseguramos de tener en el archivo de configuración \textit{/etc/ssh/sshd\_config}, habilitado \texttt{AllowTcpForwarding}, \texttt{PermitTTY}, y un valor elevado en \texttt{MaxSessions}. En caso de haber modificado la configuración de SSH, se reinicia el proceso con \texttt{sudo systemctl restart ssh}.
+
+Por su parte, del lado del destino no es necesario ninguna configuración especial, sin embargo si se quiere limitar para que solo se pueda conectar desde la IP del Bastion, se puede usar configuración del firewall, usando comandos sobre consola como:
+
+\begin{lstlisting}[language=Bash, caption={Configuración firewall para que solo acepte conexiones SSH de una IP particular}, label={cod:configuracion_firewall_solo_ssh_ip_particular}, captionpos=b]
+ufw allow from 10.10.7.1 to any port 22
+ufw deny 22
+ufw enable
+\end{lstlisting}
+
+Con estas configuraciones realizadas, nos conectamos directamente al servidor destino, usando a Bastion de proxy, utilizando el modificador \texttt{-J} que le indica al comando ssh que usara la primera conexión para saltar a la segunda:
+
+\begin{lstlisting}[language=Bash, caption={Comando conexión SSH haciendo uso del servidor proxy como salto}, label={cod:comando_conexión_SSH_haciendo_uso_del_servidor_proxy_como_salto}, captionpos=b]
+ssh -J bastion@192.168.122.128 destino1@10.10.7.2
+\end{lstlisting}
+
+Habiendo realizado exitosamente la conexión al servidor destino, nos damos cuenta que para esta tarea, necesitamos tener acceso primero al servidor Bastion, en el caso de ejemplo a través de usuario de administrador \textit{bastion}, como podríamos haber elegido usar por ejemplo el usuario \textit{brunoperez}. Esto implica la necesidad de que un usuario al conectarse, deba conocer la contraseña del usuario raíz del servidor, o que cada uno tenga su propio usuario, lo cual no es seguro, ni escalable.
+
+Es por ello que se decide por crear un usuario \textit{dummy} que no posee CLI ni permisos especiales. En el ejemplo anterior, cualquier usuario podría optar por no usar el modificador de salto, y conectarse exitosamente a Bastion. Ahora, con un usuario sin consola, si se quisiera hacer eso, una vez conectado al servidor, inmediatamente es expulsado del mismo, dado que no tiene una consola que le permita operar.
+
+Creamos el usuario dummy \textit{jump}, de la misma forma que con el usuario brunoperez, pero usando el modificador \texttt{--shell=/bin/false}, y teniendo en cuenta, que al no tener consola el usuario, no se puede conectar al mismo para crear el archivo \texttt{cat \textasciitilde/.ssh/authorized\_keys}, por lo que ademas de crear el usuario, se deben crear la carpeta \textit{.ssh}, el archivo \textit{authorized\_keys}, y posteriormente darle permisos al nuevo usuario:
+
+\begin{lstlisting}[language=Bash, caption={Creación de usuario dummy jump}, label={cod:creacion_usuario_dummy_jump}, captionpos=b]
+sudo adduser jump --shell=/bin/false
+
+sudo mkdir /home/jump/.ssh
+sudo touch /home/jump/.ssh/authorized_keys
+
+sudo chown jump:jump /home/jump/.ssh
+sudo chown jump:jump /home/jump/.ssh/authorized_keys
+\end{lstlisting}
+
+De esta forma en el servidor Bastion se tiene un usuario, el cual se puede compartir sus credenciales para aquellos que solamente deben usarlo de proxy, sin exponer el acceso al mismo a personal no autorizado.
+
+\subsection{Conclusión}
+
+Al terminar esta iteración, entendemos mejor que es necesario para poder acceder vía SSH a un servidor, a través de un servidor proxy, haciendo uso de las herramientas OpenSSH. 
+
+Adicionalmente pudimos entender las distintas opciones que nos ofrece OpenSSH para personalizar la conexión a un equipo, y como manipularlas para obtener el comportamiento buscado.
+
+Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
+
+\begin{itemize}
+    \item \textbf{REQ\_F\_SYA\_5:}
+    \begin{itemize}
+        \item Se cumple este requerimiento al limitar en el servidor destino para que solo escuche a la IP del Bastion.
+    \end{itemize}
+    \item \textbf{REQ\_F\_SYA\_6:}
+    \begin{itemize}
+        \item Se cumple este requerimiento al configurar para uso de los técnicos el usuario dummy jump, que no otorga acceso al servidor ante una autenticación exitosa, permitiendo el uso del servidor de proxy sin exponerlo innecesariamente.
+    \end{itemize}
+    \item \textbf{REQ\_F\_INF\_4:}
+     \begin{itemize}
+        \item Sumado a que por defecto Ubuntu registra los intentos de acceso en \textit{/var/log/auth.log}, la configuración de \textit{SyslogFacility AUTH} y \textit{LogLevel INFO} determina como y que tan detalladamente se registran los eventos en SSH.
+    \end{itemize}
+\end{itemize}
+
+\section{Iteración 4: Configuración del entorno de desarrollo}
+\label{sec:iteracion_dev_env}
+
+\subsection{Antecedente}
+
+Con el objetivo de facilitar las pruebas sin comprometer el entorno productivo, se diseñó un entorno de desarrollo local sobre un equipo con sistema operativo Ubuntu 22.04 LTS. Esta configuración permite realizar experimentación y validación de los distintos componentes del sistema de manera aislada.
+
+\subsection{Desarrollo}
+
+El entorno de desarrollo está compuesto por dos elementos principales: un cliente y un servidor. El cliente corresponde a la máquina física del desarrollador, mientras que el servidor es una máquina virtual creada en ese mismo equipo, mediante el uso del hipervisor VirtualBox.
+
+Para la instalación de VirtualBox se utilizaron los repositorios oficiales de Ubuntu, y una vez instalado el hipervisor, se procedió a la creación de una VM denominada \textit{dev-vm}. Esta máquina virtual ejecuta Ubuntu 20.04 LTS y fue configurada con 2 vCPU, 4 GB de memoria RAM y un disco dinámico de 40 GB en formato VDI. La red fue configurada en modo \textit{Bridged Adapter}, permitiendo así que la máquina anfitriona acceda directamente a la virtual mediante su dirección IP. Además, se instaló el servicio OpenSSH para permitir el acceso remoto.
+
+Verificada la conectividad mediante la obtención de la dirección IP asignada y una primera conexión SSH desde el host, se continuó con el despliegue de EJBCA dentro de la VM. Este proceso siguió los pasos previamente descritos en la Sección~\ref{sec:iteracion_instalacion_configuracion_ejbca}, habilitando un perfil de entidad final capaz de emitir certificados X.509 con claves RSA de 2048 bits.
+
+A continuación, se generó localmente un par de claves RSA2048 junto con una solicitud de firma de certificado (CSR), la cual fue firmada por EJBCA para obtener el certificado correspondiente. Posteriormente, se configuró el acceso SSH al servidor utilizando dicha clave pública, de modo que el cliente pudiera autenticarse sin necesidad de introducir su contraseña.
+
+\subsection{Repositorio Git en Github}
+\label{sec:github_repo}
+En esta etapa además se creó un repositorio en github: \href{https://github.com/brunoperezm/ejbca-tesis}{https://github.com/brunoperezm/ejbca-tesis} en el que se encuentra la siguiente estructura de carpetas donde se irá haciendo mención a lo largo de las siguientes iteraciones.
+
+\small\ttfamily
+\begin{verbatim}
+ejbca-tesis/
+├── .github/
+│   └── workflows/          # Pipelines de CI/CD con GitHub Actions
+├── auth-server/            # Servicio de autenticación (FastAPI)
+│   ├── app/                # Código fuente del servicio
+│   ├── config/             # Archivos de configuración por entorno
+│   ├── coverage-reports/   # Reportes de cobertura de tests
+│   ├── docker-compose.yml  # Orquestación para desarrollo
+│   ├── docker-compose.ci.yml # Configuración específica para CI
+│   └── requirements.txt    # Dependencias Python
+├── documentation/          # Documentación y diagramas del proyecto
+│   ├── dsl/                # Archivos Structurizr para diagramas C4
+│   └── level4-diagrams/    # Diagramas PlantUML complementarios
+└── pam-client/             # Módulos PAM y scripts del lado cliente
+\end{verbatim}
+\normalfont\normalsize
+
+La carpeta \texttt{auth-server/} contiene el núcleo del sistema implementado, mientras que \texttt{pam-client/} incluye los módulos de autenticación y scripts necesarios en los servidores destino. La documentación se centraliza en \texttt{documentation/} con diagramas C4 para arquitectura de alto nivel y PlantUML para detalles de implementación.
+
+
+\subsection{Conclusión}
+
+La iteración se consideró completada una vez verificado que el host Ubuntu accede correctamente a la VM mediante autenticación por clave pública, y que EJBCA se encuentra en funcionamiento con al menos un perfil de emisión configurado. Este entorno local permite a los integrantes del equipo trabajar de forma autónoma, realizando pruebas y desarrollos sin afectar el ambiente productivo.
+
+
+
+
+\section{Iteración 5: Configuración básica del modulo PAM:}
+\subsection{Antecedente}
+
+Se cuenta con un entorno de desarrollo que cuenta con dos instancias simulando cliente y servidor, que tienen SO Ubuntu, con comunicación entre ambos, y OpenSSH configurado posibilitando la conexión del cliente al servidor vía SSH haciendo uso del método de par de claves.
+
+\subsection{Desarrollo}
+
+Para poder trabajar con PAM en una sesión de SSH con par de claves e interacción con el cliente, nos aseguramos de tener configurado en \textit{/etc/ssh/sshd\_config} del servidor:
+
+\begin{itemize}
+    \item \textbf{PubkeyAuthentication yes}: Para habilitar el uso de claves publicas en la autenticación.
+    \item \textbf{AuthenticationMethods keyboard-interactive,publickey}: El método de autenticación que se usara, implicara primero una interacción con el usuario del lado del cliente que deberá ingresar un valor, y posteriormente hará uso del método de la clave pública.
+    \item \textbf{KbdInteractiveAuthentication yes}: Habilita el método de autenticación \textit{keyboard-interactive}.
+    \item \textbf{UsePAM yes}: Especifica que se podrá hacer uso del PAM. Aunque este habilitado, solamente se podrá hacer uso del mismo si en  \textit{AuthenticationMethods} esta habilitado  \textit{keyboard-interactive} o  \textit{password}, que en nuestro caso ya se cubrió.
+\end{itemize}
+
+Teniendo la configuración de OpenSSH ya preparada, seguimos con la \href{https://www.tecmint.com/configure-pam-in-centos-ubuntu-linux/}{configuración de los módulos de PAM} propios. Los módulos que hará uso PAM en una conexión SSH se pueden encontrar en \texttt{/etc/pam.d/sshd}:
+
+\begin{lstlisting}[language=Bash, caption={Contenido estándar de /etc/pam.d/sshd}, label={cod:contenido_estandar_pam_sshd}, captionpos=b]
+$ cat /etc/pam.d/sshd 
+# PAM configuration for the Secure Shell service
+
+# Standard Un*x authentication.
+@include common-auth
+
+# Disallow non-root logins when /etc/nologin exists.
+account    required     pam_nologin.so
+
+# Uncomment and edit /etc/security/access.conf if you need to set complex
+# access limits that are hard to express in sshd_config.
+# account  required     pam_access.so
+
+# Standard Un*x authorization.
+@include common-account
+
+# SELinux needs to be the first session rule.  This ensures that any
+# lingering context has been cleared.  Without this it is possible that a
+# module could execute code in the wrong domain.
+session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_selinux.so close
+
+# Set the loginuid process attribute.
+session    required     pam_loginuid.so
+
+# Create a new session keyring.
+session    optional     pam_keyinit.so force revoke
+
+# Standard Un*x session setup and teardown.
+@include common-session
+
+# Print the message of the day upon successful login.
+# This includes a dynamically generated part from /run/motd.dynamic
+# and a static (admin-editable) part from /etc/motd.
+session    optional     pam_motd.so  motd=/run/motd.dynamic
+session    optional     pam_motd.so noupdate
+
+# Print the status of the user's mailbox upon successful login.
+session    optional     pam_mail.so standard noenv # [1]
+
+# Set up user limits from /etc/security/limits.conf.
+session    required     pam_limits.so
+
+# Read environment variables from /etc/environment and
+# /etc/security/pam_env.conf.
+session    required     pam_env.so # [1]
+# In Debian 4.0 (etch), locale-related environment variables were moved to
+# /etc/default/locale, so read that as well.
+session    required     pam_env.so user_readenv=1 envfile=/etc/default/locale
+
+# SELinux needs to intervene at login time to ensure that the process starts
+# in the proper default security context.  Only sessions which are intended
+# to run in the user's context should be run after this.
+session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_selinux.so open
+
+# Standard Un*x password updating.
+@include common-password
+\end{lstlisting}
+
+En este archivo podemos ver 4 grupos de gestión distintos:
+\begin{itemize}
+    \item \textbf{Account}: Se encarga de la verificación del usuario, por ejemplo permiso de ingreso, o si su contraseña expiro.
+    \item \textbf{Authentication}: Se encarga de la autenticación del usuario.
+    \item \textbf{Password}: Se encarga de la gestión de las constraseñas de los usuarios, y lo vincula con los módulos de autenticación.
+    \item \textbf{Session}: Gestiona las acciones realizadas al inicio y al final de una sesión.
+\end{itemize}
+
+Y también las señales de control:
+\begin{itemize}
+    \item \textbf{Requisite}: Si falla, devuelve inmediatamente el control, indicando la naturaleza del primer fallo del módulo.
+    \item \textbf{Required}: Todos estos módulos deben tener éxito para que devuelva éxito.
+    \item \textbf{Sufficient}: Si todos los módulos anteriores terminaron con éxito, el éxito de este modulo retorna con éxito e ignora lo que sigue (si este modulo falla también se ignora).
+    \item \textbf{Optional}: El éxito o fracaso de este modulo no tiene impacto.
+    \item \textbf{Include y Substack}: Incluyen todas las líneas del tipo dado desde el archivo de configuración especificado como argumento para este control.
+\end{itemize}
+
+De todo el archivo, pondremos nuestra atención en 3 lineas:
+\begin{itemize}
+    \item \textbf{@include common-auth}: Encargada de la autenticación estándar.
+    \item \textbf{@include common-session}: Encargada de la gestión estándar de sesiones.
+    \item \textbf{@include common-password}: Encargada de la gestión estándar de las contraseñas.
+\end{itemize}
+
+\subsubsection{common-password}
+
+Como indicamos al principio de la sección al indicar las configuraciones a realizar en \textit{/etc/ssh/sshd\_config}, no se indico como método de acceso el de \textit{password}, por lo tanto se entendería que al tratar de acceder al servidor ya no pedirá contraseña
+
+Sin embargo, al indicar como método \textit{keyboard-interactive} en conjunto con el PAM habilitado, este método de autenticación se completara exitosamente, una vez se complete los pasos requeridos por {/etc/pam.d/sshd}, y como se mostró en el ejemplo \ref{cod:contenido_estandar_pam_sshd}, se encuentra incluido \textit{common-password}, el cual solicita el ingreso de contraseña.
+
+Sabiendo esto, si se sacara la linea \texttt{@include common-password}, entonces el servidor ya no pedirá el acceso de contraseña en el ingreso vía SSH.
+
+En nuestro caso, según se indicó en los requerimientos, se debe solicitar el ingreso de contraseña. Por lo tanto, en lugar de eliminar esta línea para evitar dicho paso, se toma la precaución de verificar que se encuentra explícitamente incluida, a fin de asegurar el cumplimiento de lo esperado.
+
+\subsubsection{PAM Python}
+
+La API del PAM esta definido en lenguaje \textit{C}, por lo tanto al introducir un modulo personalizado, espera que sea en el mismo lenguaje.
+
+Con el objetivo de unificar criterios, y utilizar un mismo lenguaje de programación con respecto al servicio de autenticación, se procedió a activar la compatibilidad de PAM con el lenguaje \textit{Python}.
+
+Para instalar PAM Python, se lo puede hacer con el siguiente comando:
+
+\begin{lstlisting}[language=Bash, caption={Instalar PAM Python}, label={cod:instalar_pam_python}, captionpos=b]
+sudo apt install libpam-python
+\end{lstlisting}
+
+Se puede verificar que se encuentre efectivamente instalado, si se encuentra \textit{pam\_python.so} en la carpeta \texttt{/lib/x86\_64-linux-gnu/security}:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/pam_python_instalado.png}
+    \caption{Carpeta con librerías que utiliza PAM para verificar la instalación de PAM Python}
+    \label{fig:pam_python_instalado}
+\end{figure}
+
+A partir de este paso, se puede agregar un modulo personalizado en PAM que se encuentre configurado en Python, siguiendo el siguiente formato:
+
+\begin{lstlisting}[language=Bash, caption={Formato estándar para agregado de modulos personalizados en Python para PAM}, label={cod:formato_estandar_pam_python}, captionpos=b]
+{GRUPO}    {CONTROL}      pam_python.so {UBICACION_SCRIPT_PYTHON}
+\end{lstlisting}
+
+Donde en el estándar definido en \ref{cod:formato_estandar_pam_python}:
+\begin{itemize}
+    \item \{GRUPO\}: Se refiere a uno de los 4 grupos de gestión, por ejemplo \textit{auth} para autenticación, o \textit{session} para sesión.
+    \item \{CONTROL\}: Se refiere a las señales de control, por ejemplo \textit{required} ó \textit{sufficient}.
+    \item pam\_python.so: Le indica que lo que sigue será el modulo personalizado, y que el mismo se encuentra codificado en Python, por lo que deberá usar la librería correspondiente.
+    \item \{UBICACION\_SCRIPT\_PYTHON\}: Ubicación del archivo donde se encuentra configurado el modulo personalizado.
+\end{itemize}
+
+
+Un ejemplo vacío de un modulo de PAM Python para utilizar se puede ver así:
+
+\begin{lstlisting}[language=Bash, caption={Preset modulo personalizado PAM Python}, label={cod:preset_modulo_presonalizado_pam_python}, captionpos=b]
+#
+# Duplicates pam_permit.c
+#
+
+def pam_sm_authenticate(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+
+def pam_sm_setcred(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+
+def pam_sm_acct_mgmt(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+
+def pam_sm_open_session(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+
+def pam_sm_close_session(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+
+def pam_sm_chauthtok(pamh, flags, argv):
+    return pamh.PAM_SUCCESS
+\end{lstlisting}
+
+Donde las distintas funciones que presentan, serán invocadas en base al grupo de control que los llame, por ejemplo, la función \texttt{pam\_sm\_authenticate} será llamada por \textit{auth}, mientras que \texttt{pam\_sm\_open\_session} y \texttt{pam\_sm\_close\_session} serán llamados por \textit{session}.
+
+Adicionalmente podemos ver que las funciones reciben tres parámetros: 
+\begin{itemize}
+    \item \textbf{pamh}: es una instancia del manejador del objeto PAM que provee la API de pam\_python que permite interactuar con el entorno PAM, como ser:
+        \begin{itemize}
+            \item Obtener y establecer credenciales.
+            \item Escribir mensajes al usuario.
+            \item Leer entradas.
+            \item Acceder a información de la sesión.
+        \end{itemize}
+    \item \textbf{flags}: Indiciadores que PAM le puede enviar al módulo.
+    \item \textbf{argv}: Lista de argumentos adicionales que se definen en el archivo de configuración que invoca el módulo personalizado, los cuales pueden ser enviados al agregarlos a continuación de la especificación de la ubicación del archivo.
+\end{itemize}
+
+
+Por otro lado, también debe retornar un código de estado, en el ejemplo \ref{cod:preset_modulo_presonalizado_pam_python}, todas las funciones tienen un \textit{return}, y algunos ejemplos a utilizar son:
+
+\begin{itemize}
+    \item \textbf{pam\_sm\_authenticate}:
+    \begin{itemize}
+        \item \textit{pamh.PAM\_SUCCESS}: autenticación correcta.
+        \item \textit{pamh.PAM\_AUTH\_ERR}: autenticación fallida.
+        \item \textit{pamh.PAM\_USER\_UNKNOWN}: usuario no reconocido.
+        \item \textit{pamh.PAM\_MAXTRIES}: se excedieron los intentos de ingreso.
+    \end{itemize}
+    \item \textbf{pam\_sm\_open\_session}:
+    \begin{itemize}
+        \item \textit{pamh.PAM\_SUCCESS}: sesión abierta correctamente.
+        \item \textit{pamh.PAM\_SESSION\_ERR}: si hubo un error.
+    \end{itemize}
+\end{itemize}
+
+En función del código que retorne el módulo, PAM determinará si debe continuar con el proceso de autenticación (u otro grupo), o si debe interrumpirlo por un error.
+
+\subsubsection{common-auth}
+
+Realizamos la primera prueba sobre la personalización del modulo de autenticación con el PAM. 
+
+Para ello ponemos en marcha el ejemplo \ref{cod:preset_modulo_presonalizado_pam_python}, creándolo como \texttt{/usr/lib/security/pam\_certauth.py}, y en \texttt{/etc/pam.d/sshd} comentamos \texttt{@include common-auth} y lo reemplazamos con \texttt{auth required      pam\_python.so /usr/lib/security/pam\_certauth.py}. A partir de esta modificación, en el proceso de autenticación PAM dependerá de la salida de la función \textit{pam\_sm\_authenticate}.
+
+Nos aseguramos que la clave pública que se utiliza en el cliente se encuentre en \textit{authorized\_keys} y se reinicia el servicio de ssh.
+
+En este punto, corroboramos correctamente que cuando el cliente trata de conectarse vía SSH al servidor, cumple con la condición \textit{keyboard-interactive} al pasar por PAM, donde nuestro modulo solamente devuelve el código exitoso, y luego el \textit{common-password} solicita el ingreso de la contraseña del usuario, seguido en caso de éxito por la condición \textit{publickey}.
+
+Para este punto del trabajo, aún no contamos con el servicio de autenticación, sin embargo sabemos que nuestro modulo deberá comunicarse con el usuario, y luego con el servicio, con el cual recuperar la clave pública del usuario, de forma que extendemos el ejemplo de prueba \ref{cod:preset_modulo_presonalizado_pam_python}, obviando la comunicación con el servicio, con el objetivo de poner en practica sus funciones y corroborar que puede ser utilizado para nuestro objetivo.
+
+\begin{lstlisting}[language=Bash, caption={Modulo personalizado PAM Python con escritura de clave pública}, label={cod:modulo_pesonalizado_pam_python_escritura_clave_publica}, captionpos=b]
+
+def pam_sm_authenticate(pamh, flags, argv):
+    try:
+        user = pamh.get_user(None)
+        if user is None:
+            print("Usuario es None")
+            return pamh.PAM_USER_UNKNOWN
+            
+        f = open("/home/" + user + "/.ssh/authorized_keys","w+")
+        if f is None:
+            print("No se pudo abrir el archivo authorized_keys")
+            return pamh.PAM_USER_UNKNOWN
+
+        msg = pamh.Message(pamh.PAM_PROMPT_ECHO_ON, "Ingrese el serial_id de su certificado: ")
+        resp = pamh.conversation(msg)
+        username = resp.resp
+        if username is None:
+            return pamh.PAM_USER_UNKNOWN
+
+        pamh.conversation(pamh.Message(pamh.PAM_TEXT_INFO, "Buscando certificado con serial_id: " + username))
+        pamh.conversation(pamh.Message(pamh.PAM_TEXT_INFO, "Encontrado :) Anadida clave publica a authorized_keys"))
+
+        f.write("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHDzwbYUjqoUwpfjHvBmOAsDqJKAl+hqVEkUvqC5dYUt bruno178pm@gmail.com")
+        f.close()
+
+    except Exception as e:
+        f2 = open("/tmp/error","w")
+        f2.write(str(e))
+        f2.close()
+        return pamh.PAM_USER_UNKNOWN
+    
+    return pamh.PAM_SUCCESS
+\end{lstlisting}
+
+Realizamos modificaciones sobre la función \textit{pam\_sm\_authenticate} como puede verse en el código \ref{cod:modulo_pesonalizado_pam_python_escritura_clave_publica}, donde destacamos:
+
+\begin{itemize}
+    \item pamh.get\_user(None): Esta función nos devuelve el usuario con el que se esta tratando de iniciar sesión en el servidor, lo cual nos es útil para poder modificar el \textit{authorized\_keys} correspondiente.
+    \item pamh.Message(pamh.PAM\_PROMPT\_ECHO\_ON): Con esta función el módulo se comunica con el usuario, indicándole que ingrese un valor, en este caso, el serial\_id de su certificado, un valor único del certificado que podría permitir su identificación una vez se tenga el sistema completo.
+    \item pamh.conversation(pamh.Message(pamh.PAM\_TEXT\_INFO)): Con esta función el módulo le envía mensajes al usuario, en este caso de prueba, se hace de cuenta que se estuviera procesando la información enviada por el usuario.
+    \item Posteriormente, se escribe de manera fija una clave pública que se tiene en el cliente del entorno de desarrollo, que será escrito en \textit{authorized\_keys} y será utilizado en el acceso del usuario.
+    \item Finalmente, las operaciones se realizaron con una estructura de \textit{try catch} donde si se hubiera generado alguna excepción en la operación se hubiera escrito la razón en un archivo dispuesto para ese fin con devolución de error al PAM, caso contrario devolviendo pamh.PAM\_SUCCESS y finalizando exitosamente el módulo personalizado.
+\end{itemize}
+
+Una vez modificado el codigo, se reinicia el servicio de SSH, y realizando pruebas de acceso, se podría observar un comportamiento como el mostrado en la imagen \ref{fig:conexion_prueba_pam}, donde se puede ver los mensajes que envía el módulo, el pedido de ingreso de contraseña, y posteriormente, el acceso exitoso al servidor.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Conexion_prueba_pam.png}
+    \caption{Intento de conexión desde el cliente al servidor con la autenticación personalizada con el módulo de prueba de PAM}
+    \label{fig:conexion_prueba_pam}
+\end{figure}
+
+Cumpliendo esta prueba es que sabemos que nuestro sistema una vez completo será capaz de funcionar según se planifico.
+
+\subsubsection{common-session}
+
+Con la prueba anterior, sabemos que invocando desde \textit{auth} a nuestro código, se invoca la función \textit{pam\_sm\_authenticate}, y su comportamiento afectará la autenticación del usuario.
+
+De la misma forma, haciendo uso de \textit{session} se espera poder tener control sobre la sesión del usuario en el servidor, esto es con el objetivo de borrar la clave pública de la lista de claves autorizadas una vez se desconecte. Realizando esta tarea, nos aseguramos de que el usuario deba pasar por el proceso completo de autenticación cada vez que quiera ingresar, y evitamos la posibilidad de acumulación de claves con el tiempo, que eventualmente pudieran darle el acceso a alguien que alguna vez la tuvo y ya no, o que fue vulnerada.
+
+Empezamos agregando en \texttt{/etc/pam.d/sshd} la invocación a nuestro archivo con session: \texttt{session required      pam\_python.so /usr/lib/security/pam\_certauth.py}.
+
+Ahora surtirán efecto las modificaciones que realicemos sobre las funciones \textit{pam\_sm\_open\_session} y \textit{pam\_sm\_close\_session}, siendo este último el que nos interesa y que será modificado.
+
+\begin{lstlisting}[language=Bash, caption={Modulo personalizado PAM Python con borrado de clave pública}, label={cod:modulo_pesonalizado_pam_python_borrado_clave_publica}, captionpos=b]
+def pam_sm_close_session(pamh, flags, argv):
+    user = pamh.get_user(None)
+    if user is None:
+        print("Usuario es None")
+        return pamh.PAM_SESSION_ERR
+
+    # Abrir el archivo authorized_keys
+    f = open("/home/" + user + "/.ssh/authorized_keys", "w+")
+    f.write("")
+    f.close()
+    if f is None:
+        print("No se pudo abrir el archivo authorized_keys")
+        return pamh.PAM_SESSION_ERR
+
+    return pamh.PAM_SUCCESS
+\end{lstlisting}
+
+En la configuración realizada como se muestra en \ref{cod:modulo_pesonalizado_pam_python_borrado_clave_publica}, se hacen uso de las mismas herramientas vistas para la autorización, pero cumpliendo un rol distinto, el de borrar el contenido del archivo \textit{authorized\_keys} una vez se cierra la sesión.
+
+Se realiza nuevamente la prueba de acceso desde el cliente al servidor, se observa que una vez ha ingresado efectivamente se encuentra su clave pública en el archivo, y que una vez cierra la sesión, el contenido de la lista de claves fue eliminado.
+
+Cabe aclarar que la clave que se encuentra en \textit{authorized\_keys} es solamente utilizado durante el proceso de autenticación, así que en caso de que se borre su contenido mientras hay usuarios conectados, no les afecta cerrándoles la sesión, ni de ninguna otra forma. 
+
+\subsection{Conclusión}
+
+En esta tarea se investigó el funcionamiento de PAM, que realizan sus distintas formas, y como personalizar su uso, modificando sus valores por defecto, como agregando módulos propios utilizando un interprete de Python, que nos permiten interferir en el proceso habitual de acceso de un usuario a un servidor vía SSH.
+
+Entre las pruebas, se destaca la manipulación para el requerimiento o no del ingreso de contraseña, la comunicación entre el módulo personalizado y el usuario, y la capacidad del módulo de interactuar con el sistema en el que se encuentra.
+
+Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
+\begin{itemize}
+    \item REQ\_F\_SYA\_7: Configurando la sesión para borrar las credenciales de usuario cuando el mismo se desconecta, el mismo deberá nuevamente pasar por el proceso completo para poder ingresar.
+    \item REQ\_F\_IUS\_4: Se cumple el requerimiento habiendo especificado el ingreso de contraseña en la configuración del PAM.
+    \item REQ\_F\_IUS\_5: Se cumple el requerimiento habiendo especificado el ingreso de contraseña en la configuración del PAM.
+    \item REQ\_F\_INF\_1: Configurando el PAM de forma que solo interfiere en el ingreso al servidor vía SSH, se evita impedir el acceso ante una falla mediante formas alternativas.
+\end{itemize}
+
+\section{Iteración 6: Configuración servicio de obtención de claves}
+
+\subsection{Antecedente}
+
+Al comenzar esta iteración, se cuenta con el entorno de desarrollo configurado en la Iteración 4, el cual incluye una VM con Ubuntu 20.04 donde ya se encuentra desplegado EJBCA. Adicionalmente, se tienen configurados los módulos PAM básicos de la Iteración 5, lo que permite interceptar el proceso de autenticación SSH.
+\subsection{Instalación básica de FastAPI usando Docker}
+
+Se hace una carpeta  \texttt{/home/proyecto/fastapi-auth} que contendrá el servicio de obtención de claves.
+La estructura de dicha carpeta quedará así en esta primera instancia.
+
+
+%\begin{lstlisting}[language=Bash,
+%                   caption={Estructura inicial del servicio},
+%                   label={cod:tree_fastapi}, captionpos=b]
+%├── app
+%│   ├── main.py
+%│   └── __init__.py
+%├── config
+%│   └── settings.yaml
+%├── Dockerfile
+%├── docker-compose.yml
+%└── requirements.txt
+%\end{lstlisting}
+Cada archivo cumple una función específica:
+\begin{itemize}
+    \item \textbf{main.py}: Punto de entrada de la aplicación FastAPI.
+    \item \textbf{\_\_init\_\_.py}: Archivo que marca el directorio \texttt{app} como un paquete Python.
+    \item \textbf{settings.yaml}: Archivo de configuración que contiene parámetros como URLs de EJBCA, rutas de certificados y credenciales. Es útil tener este archivo por separado y no mezclarlo con el código en sí porque si se cambia de entorno, por ejemplo entre desarrollo y producción, no hace falta cambiar el código fuente sino la configuración.
+    \item \textbf{Dockerfile}: Define la imagen Docker del servicio, incluyendo dependencias y configuración del entorno de ejecución.
+    \item \textbf{docker-compose.yml}: Orquesta el despliegue del servicio, configurando redes, volúmenes y variables de entorno.
+    \item \textbf{requirements.txt}: Lista las dependencias Python necesarias.
+\end{itemize}
+La ventaja en este caso de tener dockerizada la implementación es que no hace falta saber cómo instalar fast api ni ninguna de sus dependencias.
+Con correr el comando
+\begin{lstlisting}[language=Bash, caption={Comando para iniciar el servicio de autenticación}, label={cod:iniciar_servicio_auth}, captionpos=b]
+docker-compose up --build
+\end{lstlisting}
+ya alcanza para levantar el contenedor de docker en el puerto 8888, con recarga automática habilitada para facilitar el desarrollo.
+
+\subsubsection{Configuración inicial del proyecto}
+
+Se inicia creando el directorio del proyecto y estableciendo la estructura de archivos base. En primer lugar, se define el archivo \texttt{requirements.txt} con las dependencias necesarias para el servicio:
+
+\begin{lstlisting}[language=Bash, caption={Dependencias del servicio de autenticación}, label={cod:requirements_servicio}, captionpos=b]
+fastapi==0.113.0
+uvicorn==0.34.0
+pydantic==2.10.4
+requests==2.32.3
+PyYAML==6.0.2
+pyOpenSSL==25.0.0
+\end{lstlisting}
+Este archivo define las librerías fundamentales que permiten al servicio funcionar como una API REST moderna. FastAPI proporciona el framework web con documentación automática, mientras que requests habilita la comunicación con EJBCA a través de su API REST. PyYAML permite la carga de archivos de configuración estructurados y pyOpenSSL facilita el manejo de certificados X.509.
+
+A continuación, se configura el \texttt{Dockerfile} para crear la imagen del servicio:
+
+\begin{lstlisting}[language=Bash, caption={Dockerfile del servicio de autenticación}, label={cod:dockerfile_servicio}, captionpos=b]
+FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./app /code/app
+
+CMD ["fastapi", "run", "app/main.py", "--port", "80", "--workers", "4"]
+\end{lstlisting}
+Este Dockerfile establece un entorno Python aislado y reproducible que encapsula todas las dependencias del servicio. Al containerizar la aplicación, se garantiza que el servicio funcionará de manera consistente independientemente del entorno donde se despliegue, eliminando problemas de compatibilidad y facilitando la portabilidad entre diferentes servidores.
+
+\subsubsection{Configuración de Docker Compose}
+
+Para facilitar el despliegue y la comunicación con EJBCA, se configura \texttt{docker-compose.yml}:
+
+\begin{lstlisting}[language=Bash, caption={Docker Compose del servicio de autenticación}, label={cod:docker_compose_servicio}, captionpos=b]
+version: '3.8'
+
+services:
+  fastapi-auth:
+    build: .
+    volumes:
+      - ./app:/code/app
+      - ./config:/code/config
+    environment:
+      - ENV=prod
+      - PROJECT_PATH=/code
+    command: ["fastapi", "run", "app/main.py", "--port", "8888", "--workers", "1", "--reload"]
+    networks:
+      - internal-network
+      - ejbca_shared_network
+
+networks:
+  internal-network:
+    driver: bridge
+  ejbca_shared_network:
+    external: true
+\end{lstlisting}
+Esta configuración orquesta el despliegue del servicio y establece la infraestructura de red necesaria para su funcionamiento. Los volúmenes montados permiten el desarrollo ágil al reflejar cambios en el código sin reconstruir la imagen, mientras que las dos redes configuradas habilitan tanto la comunicación interna como la conectividad con EJBCA a través de la red compartida externa.
+
+
+\subsubsection{Implementación del servicio FastAPI}
+
+Se desarrolla el archivo principal \texttt{main.py} con la estructura básica del servicio:
+
+\begin{lstlisting}[language=Bash, caption={Implementación inicial del servicio FastAPI}, label={cod:main_py_inicial}, captionpos=b]
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="Certificate Validation API",
+    description="API para validar certificados X.509 emitidos por EJBCA",
+    version="1.0.0"
+)
+
+@app.get("/healthcheck")
+def healthcheck():
+    return {"status": "ok"}
+
+@app.get("/api/v1/certificate/{serial_id}/validate")
+def validate_certificate(serial_id: str):
+    # Logica de validacion a implementar
+    return {"message": f"Validating certificate {serial_id}"}
+\end{lstlisting}
+
+Este código establece la API REST que servirá como punto de entrada para las solicitudes de validación de certificados. El endpoint de healthcheck permite verificar que el servicio esté operativo, mientras que el endpoint de validación define la interfaz que consumirán los módulos PAM para verificar la validez de los certificados presentados por los usuarios.
+
+\subsubsection{Configuración del archivo de settings}
+
+Se crea el archivo \texttt{config/settings.yaml} para centralizar la configuración del servicio:
+
+\begin{lstlisting}[language=Bash, caption={Archivo de configuración del servicio}, label={cod:settings_yaml}, captionpos=b]
+ejbca:
+  base_url: "https://ejbca-container:8443/ejbca/ejbca-rest-api"
+  certificate_path: "/code/certs/client.pem"
+  cert_password: "/code/certs/client.key"
+  issuer_dn: "CN=ManagementCA"
+\end{lstlisting}
+
+\subsubsection{Verificación del despliegue}
+
+Para verificar que el servicio funciona correctamente, se ejecuta:
+
+\begin{lstlisting}[language=Bash, caption={Comandos para iniciar y verificar el servicio}, label={cod:verificar_servicio}, captionpos=b]
+# Iniciar el servicio
+docker-compose up --build
+
+# Verificar el estado del servicio
+curl http://localhost:8888/healthcheck
+
+# Probar el endpoint de validacion
+curl http://localhost:8888/api/v1/certificate/123ABC/validate
+\end{lstlisting}
+
+\subsection{Arquitectura interna}
+Antes de proceder con la implementación del servicio se diagramó cómo debería ser la arquitectura interna del mismo, siguiendo una arquitectura dividida en capas. De esta manera se puede tener una organización interna del proyecto, separando responsabilidades y asegurando que si tiene que escalar, o tener cambios ya se sabe dónde va a tener que estar ubicado el código nuevo.
+
+Además la ventaja de hacer esto es que es más testeable, porque cada parte del sistema tiene una responsabilidad aislada. Siguiendo el principio de responsabilidad única, cada parte del sistema debería tener un solo motivo para cambiar.
+Sobre el final de la sección se incluye la figura ~\ref{fig:internal_auth_service_architecture}  que resume la interacción entre todas las capas internas.
+\textbf{Capa de presentación}
+
+Es la encargada de recibir, procesar, y validar \textit{requests} y \textit{responses} HTTP, convertirla a un objeto entendible por el sistema y devolver objetos válidos en sus respuesta.
+Dicho de otra manera, si algún día se eligiese cambiar de REST Api a GraphQl Api, por ejemplo, sólo debería modificarse esta parte del sistema.
+En el caso de este proyecto esta capa es la que expone el endpoint de autenticación, cuya interfaz queda definida así:
+
+\textbf{\textit{GET /certificate/\{serial\_id\}/validate}}
+\label{ep:cert-validate}
+
+%---- Tabla de metadatos -------------------------------------------------
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lp{0.72\linewidth}@{}}
+%\toprule
+\hline
+\textbf{Método}           & \textit{GET} \\ %\midrule
+\hline
+\textbf{URL}              & \textit{/certificate/\{serial\_id\}/validate} \\ %\midrule
+\hline
+\textbf{Path params}      & \textit{serial\_id} (hex string) – Nº de serie del certificado X.509. \\
+\hline
+\end{tabular}
+\caption{Contrato del endpoint \textit{GET /certificate/\{serial\_id\}/validate}}
+\end{table}
+
+%---- Tabla de códigos de estado ----------------------------------------
+\begin{table}[H]
+\label{table:codigos_estado_servicio}
+\centering
+\begin{tabular}{@{}ll@{}}
+%\toprule
+\hline
+\textbf{Status} & \textbf{Descripción} \\ %\midrule
+\hline
+200 OK & Certificado válido (devuelve \textit{AuthResponse}\footnotemark). \\ 
+400 Bad Request & Error de entrada (serial inexistente, malformado, etc.). \\ 
+403 Forbidden & El certificado está revocado. \\ 
+500 Internal Server Error & Fallo interno inesperado (EJBCA caído, etc.). \\ %\bottomrule
+\hline
+\end{tabular}
+\caption{Respuestas del endpoint \textit{/certificate/\{serial\_id\}/validate}}
+\end{table}
+
+\footnotetext{%
+\textit{AuthResponse} tiene dos campos:
+\textit{allowed: bool} y
+\textit{authorized\_keys\_entry: list[str]}.%
+}
+
+
+\textbf{Capa de infraestuctura}
+
+Es la encargada de lidiar con todo lo externo al servicio en sí. Desde hacer llamadas a provedoores hasta decodificar la respuestas de los mismo en objetos entendibles por el dominio.
+En este caso se encargará de implementar la comunicación con la API de EJBCA tanto para obtener estado de revocación como para obtener el certificado en crudo en sí.
+Ademas el certificado tendrá que ser decodificado y transformado en un formato legible así que esa lógica también es parte de esta capa.
+
+Los dos endpoints de EJBCA REST API utilizados son:
+
+\begin{itemize}
+    \item \textbf{GET /v1/certificate/\{issuer\_dn\}/\{serial\_number\}/revocationstatus}: permite consultar el estado de revocación de un certificado, dado su número de serie y el DN de la autoridad emisora. Esta operación devuelve si el certificado está vigente, revocado o expirado.
+    
+    \item \textbf{POST /v1/certificate/search}: permite realizar una búsqueda de certificados aplicando distintos filtros. En este caso se utilizará para recuperar el contenido completo del certificado X.509 asociado a un número de serie.
+\end{itemize}
+
+La implementación concreta de las llamadas HTTP a estos endpoints, incluyendo el manejo de certificados cliente para autenticación mutua (mTLS), parsing de respuestas JSON y manejo de errores, se encapsula en la capa de infraestructura, más específicamente en un repositorio que expone una interfaz hacia el dominio.
+
+Este respositorio tiene como única responsabilidad traducir lo externo (la API REST de EJBCA) a una interfaz interna estable que el resto del sistema pueda utilizar sin conocer detalles de red, autenticación ni formato de respuestas. De esta manera, si en el futuro se reemplazara EJBCA por otra CA con una API diferente, el único módulo a modificar sería este.
+
+\textbf{Capa de dominio}
+
+Esta capa concentra la lógica de negocio del sistema. Su responsabilidad principal es modelar los conceptos centrales —por ejemplo, \textit{Certificate}— y aplicar las reglas que les corresponden, independientemente de cómo se obtienen o exponen los datos.
+
+\begin{itemize}
+    \item \textbf{Entidad \textit{Certificate}}: encapsula número de serie, estado (válido, revocado, expirado) y clave pública.
+    \item \textbf{Interfaz \textit{CertificateRepository}}: expone las operaciones de buscar certificado y obtener estado de revocación. La capa de infraestructura proporciona la implementación concreta que dialoga con EJBCA; el dominio permanece ajeno a detalles de red o formato.
+    \item \textbf{Función \textit{AuthorizedKeysBuilder}}: recibe la clave pública y otros datos y compone la cadena requerida por OpenSSH
+    \begin{center}
+        \texttt{<algo> <base64-key> <comment>}
+    \end{center}
+    Esta función vive en el dominio porque forma parte de las reglas propias del sistema: dado un certificado válido, debe producir la entrada exacta que el módulo PAM insertará, de forma transitoria, en el archivo \texttt{authorized\_keys} del usuario.
+\end{itemize}
+
+Con esta organización, la lógica de validación y de construcción de la entrada \texttt{authorized\_keys} se puede testear sin necesidad de levantar contenedores ni realizar llamadas HTTP; basta con mocks de \textit{CertificateRepository}. Además, el dominio no depende de FastAPI o la librería \texttt{requests} ni de los detalles JSON de la API de EJBCA.
+
+\textbf{Capa de aplicación}
+
+La capa de aplicación orquesta la interacción entre la capa de presentación y la lógica de negocio. No contiene lógica del dominio, pero sabe cómo componer los distintos casos de uso.
+
+En este caso, contiene el servicio de autenticación, responsable de recibir una solicitud con el número de serie del certificado, consultar al repositorio si el certificado existe, verificar su estado de revocación, y finalmente devolver una respuesta adecuada.
+
+Esta capa también se encarga de transformar la respuesta del dominio (por ejemplo, un objeto \textit{Certificate}) en una estructura que la capa de presentación pueda serializar como JSON. Además, define el contrato de entrada/salida y el manejo de errores conocidos, como certificado no encontrado, certificado revocado, o fallos internos.
+
+Su diseño se basa en no tomar decisiones complejas por sí misma, sino que se apoya en la capa de dominio para tomar decisiones, y en infraestructura para obtener los datos.
+
+Nuevamente, la ventaja de tener separada esta capa es que al tener sus dependencias definidas en el dominio, no se necesita ninguna librería extra para testearla, es decir que es 100\% testeable con unit tests.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{fig/arquitectura_interna.png}
+    \caption{Arquitectura interna del servicio de autenticacion}
+    \label{fig:internal_auth_service_architecture}
+\end{figure}
+La Figura~\ref{fig:internal_auth_service_architecture} sintetiza la interacción entre las cuatro capas que componen el servicio de autenticación: presentación (izquierda), aplicación, dominio e infraestructura (derecha). Además pone en contexto la interacción del servicio con las partes externas: el Proxy SSH y EJBCA.
+Se observa que el Proxy SSH interactúa con la capa de presentación, ya que los requests son redirijidos hacia ella a través del proxy. Además, la parte del sistema que interactúa realmente con EJBCA es la capa de infraestructura.
+
+\subsection{Flujo de validación dentro del servicio de autenticación}
+\label{sec:auth-service-flow}
+Una vez que el \textit{Proxy SSH} delega la verificación al servicio, todo el trabajo se concentra en cuatro componentes internos: el \textit{Certificate Controller} (presentación), el \textit{Orquestador de Autenticación} (aplicación), el \textit{Dominio de Certificados} y el \textit{Repositorio de Certificados} (infraestructura). La Figura~\ref{fig:auth_service_sequence} muestra la interacción dinámica entre los distintos componentes.
+No se muestra en el diagrama todas las interacciones de respuesta, así que se debe sobreentender que todas las interacciones son bidireccionales y que cuando no hay una respuesta se trata de una respuesta exitosa.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig/structurizr-1-AuthenticationFlow.png}
+  \caption{Diagrama de secuencia de un camino feliz de autenticación que muestra la interacción de los componentes del servicio.}
+  \label{fig:auth_service_sequence}
+\end{figure}
+
+\subsubsection{Flujo principal (caso exitoso)}
+
+El proceso de validación sigue una secuencia que abarca desde la recepción de la solicitud hasta la generación de la entrada SSH autorizada. La secuencia mostrada en la figura \ref{fig:auth_service_sequence} se puede describir de la siguiente manera:
+
+\textbf{Recepción de solicitud}. El \textit{SSL Proxy Server} recibe la solicitud HTTPS desde el módulo PAM y la redirige al \textit{Certificate Controller}. Esta capa de proxy garantiza que solo clientes autenticados mediante mTLS puedan acceder al servicio de autenticación.
+
+\textbf{Delegación a la capa de aplicación}. El controlador delega inmediatamente la lógica de autenticación al \textit{Orquestador de Autenticación}, que coordina todo el proceso. Esta separación permite que la lógica de negocio permanezca independiente de los detalles del protocolo HTTP.
+
+\textbf{Verificación de estado de revocación}. El orquestador solicita al \textit{Repositorio de Certificados} verificar si el certificado ha sido revocado. Esta consulta se propaga hasta EJBCA a través de la implementación del repositorio, que utiliza la API REST para consultar el estado actual del certificado en la autoridad de certificación. Una sutileza implícita de esta verificación es que también internamente se chequea que el certificado exista.
+
+\textbf{Obtención del certificado completo}. Una vez confirmado que el certificado existe y no está revocado, se procede a obtener el certificado X.509 completo desde EJBCA mediante una búsqueda por número de serie. Este certificado crudo es procesado por el \textit{Parser de Certificados}, que utiliza las librerías OpenSSL para convertirlo en un objeto de dominio estructurado.
+
+\textbf{Validaciones de dominio}. Con el certificado disponible como objeto de dominio, el \textit{Dominio de Certificados} ejecuta las validaciones de negocio críticas. Se verifica que el certificado no haya expirado comparando las fechas de validez con el tiempo actual.
+
+\textbf{Generación de clave SSH}. Si todas las validaciones son exitosas, el componente de \textit{Gestión de Claves} extrae la clave pública del certificado X.509 y la convierte al formato SSH requerido para el archivo \texttt{authorized\_keys}. Esta conversión incluye el formateo adecuado y la adición de metadatos necesarios para OpenSSH.
+
+\textbf{Respuesta exitosa}. El orquestador consolida todos los resultados y retorna al controlador una respuesta de autenticación exitosa que incluye tanto la confirmación de acceso como la entrada SSH generada. Esta respuesta se traduce en un HTTP 200 con el payload JSON correspondiente.
+
+\subsubsection{Variantes por condiciones de error}
+
+El servicio maneja diferentes escenarios de fallo, cada uno con un punto de interrupción específico en el flujo para garantizar la seguridad del sistema.
+
+\textbf{Certificado revocado}. Si durante la verificación inicial EJBCA reporta que el certificado está revocado, el flujo se interrumpe inmediatamente. El orquestador genera una respuesta de rechazo sin proceder con las validaciones restantes, evitando trabajo innecesario y posibles vectores de ataque.
+
+\textbf{Certificado no encontrado}. Durante la búsqueda del certificado completo, si EJBCA no encuentra el certificado solicitado, el repositorio retorna un error específico. Este escenario puede indicar que el número de serie proporcionado es inválido, que contiene errores de tipeo, o que el certificado nunca fue emitido por la autoridad de certificación.
+
+\textbf{Error de parsing}. Si el \textit{Parser de Certificados} no puede decodificar el certificado X.509 recibido desde EJBCA, se genera un error de formato que resulta en el rechazo inmediato de la autenticación. Este tipo de error puede indicar corrupción de datos o incompatibilidades en el formato del certificado.
+
+\textbf{Certificado expirado}. Durante las validaciones de dominio, si el certificado ha excedido su período de validez, la validación temporal falla y se rechaza el acceso. Este mecanismo garantiza que certificados vencidos no puedan ser utilizados para acceder al sistema, incluso si no han sido explícitamente revocados.
+
+\textbf{Errores de comunicación con EJBCA}. Cualquier fallo en la comunicación HTTP con EJBCA, incluyendo timeouts, errores de red, o respuestas de error del servidor, resulta en un error interno que rechaza la autenticación por precaución. Esta aproximación de "fallar de forma segura" garantiza que problemas de infraestructura no comprometan la seguridad del sistema.
+
+En todos los casos de error, el servicio registra el evento completo en los logs del sistema para permitir auditoría posterior y debugging. Las respuestas HTTP siguen los estándares apropiados y son las que se describieron en la tabla \ref{table:codigos_estado_servicio}.
+
+\subsection{Implementación del servicio}
+La implementación completa se puede encontrar en el \ref{sec:github_repo}.
+En esta sección se muestra y se hace mención a las partes más importantes en el código.
+\subsubsection{Modelo de dominio}
+
+Antes de analizar la implementación, es importante entender la estructura de las clases principales que componen el núcleo del dominio. La Figura~\ref{fig:domain_model} muestra las entidades centrales y sus relaciones.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{fig/domain_class_diagram.png}
+    \caption{Diagrama de clases del modelo de dominio del servicio de autenticación}
+    \label{fig:domain_model}
+\end{figure}
+Las clases del dominio se organizan en torno a cuatro conceptos fundamentales:
+
+\textbf{Certificate}: Entidad raíz que representa un certificado X.509 completo. Encapsula todas las propiedades necesarias para la validación: número de serie único, clave pública, fecha de expiración y componentes del certificado. Si bien un certificado X.509 tiene muchos más atributos, los que interesan para el proyecto son los que se incluyen en esta entidad. Su responsabilidad principal es determinar si el certificado está vigente mediante el método \texttt{is\_expired()}.
+
+\textbf{SerialNumber}: Value object que encapsula el número de serie del certificado como un entero, proporcionando la funcionalidad de conversión a formato hexadecimal mayúscula mediante \texttt{to\_hex\_uppercase()}. Este formato es requerido por las APIs de EJBCA para las consultas de estado.
+
+\textbf{X509PublicKey}: Value object especializado que encapsula una clave pública en formato PEM estándar. Su responsabilidad crítica es la conversión al formato SSH compatible con OpenSSH mediante \texttt{to\_ssh\_public\_key()}, ocultando la complejidad de las transformaciones criptográficas subyacentes.
+
+\textbf{AuthorizedKeysBuilder}: Servicio de dominio que construye la entrada completa para el archivo \texttt{authorized\_keys} de SSH. Toma los componentes del certificado (email, nombre común, rol) y la clave pública SSH para generar la línea exacta que debe ser insertada temporalmente por el módulo PAM.
+
+Esta estructura sigue principios de diseño orientado a objetos, donde cada clase tiene una responsabilidad única y las validaciones están encapsuladas en los constructores para garantizar que los objetos siempre estén en un estado válido.
+\subsubsection{Implementación de capa de aplicación}
+
+La implementación completa del servicio se encuentra disponible en el repositorio del proyecto. A continuación se presenta el código central del servicio de autenticación que orquesta todo el flujo de validación:
+
+\begin{lstlisting}[language=Python, caption={Servicio de autenticación principal}, label={cod:authenticate_service}, captionpos=b]
+import logging
+from typing import Optional, Tuple
+
+from app.domain.entities.authorized_keys import AuthorizedKeysBuilder
+from app.domain.repositories.certificate_repository import \
+    CertificateRepository
+from pydantic import BaseModel
+
+class AuthenticateService:
+    def __init__(self,
+                 certificate_repository: CertificateRepository,
+                 authorized_keys_builder: AuthorizedKeysBuilder,
+                 logger: logging.Logger = logging.getLogger(__name__)):
+        self.certificate_repository = certificate_repository
+        self.authorized_keys_builder = authorized_keys_builder
+        self.logger = logger
+
+    def authenticate(self, serial_id: str, username: str) -> Tuple[AuthResponse, dict]:
+        isRevoked, err = self.certificate_repository.is_revoked(serial_id)
+        if err:
+            return None, {"error": "is_revoked call failed", "detail": err}
+        if isRevoked:
+            return AuthResponse(allowed=False), None
+
+        certificate, err = self.certificate_repository.get_certificate(
+            serial_id)
+
+        if err:
+            return None, {"error": "get_certificate failed", "detail": err}
+
+        if certificate.is_expired():
+            self.logger.info("Certificate is expired")
+            return AuthResponse(allowed=False), None
+        
+        try:
+            authorized_keys_entry = self.authorized_keys_builder.build(
+                certificate.subject_components["emailAddress"],
+                certificate.subject_components["CN"],
+                username,
+                certificate.public_key
+            )
+        except Exception as e:
+            return None, {"error": "authorized_keys_builder failed", "detail": str(e)}
+        return AuthResponse(allowed=True, authorized_keys_entry=authorized_keys_entry), None
+\end{lstlisting}
+
+\textbf{Principios de diseño aplicados}. 
+El \texttt{AuthenticateService} ejemplifica dos principios fundamentales de SOLID. El Principio de Responsabilidad Única (SRP) se refleja en que la clase tiene una única razón para cambiar: modificaciones en la lógica de orquestación de la autenticación. No maneja detalles de comunicación HTTP, parsing de certificados, ni formateo de respuestas.
+
+El Principio de Inversión de Dependencias (DIP) se implementa mediante la inyección de abstracciones en el constructor (líneas 10-12). El servicio depende de la interfaz \texttt{CertificateRepository} y no de su implementación concreta, permitiendo que diferentes implementaciones (EJBCA, base de datos, mock para testing) sean intercambiables sin modificar el código de aplicación.
+
+\textbf{Gestión de errores y flujo de control}. El método \texttt{authenticate} implementa una estrategia de \textit{fail-fast} donde cada validación puede interrumpir el flujo inmediatamente (líneas 19-21, 25-27, 29-31). Esta aproximación garantiza que no se ejecute trabajo innecesario una vez detectada una condición de rechazo y simplifica el debugging al fallar en el punto exacto del problema.
+
+\textbf{Dependencias con librerías externas}. Notar que el servicio no depende de ninguna librería externa y con solamente tener una instalación básica de python y teniendo las clases definidas en el dominio se puede correr la lógica.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/class_diagram_service.png}
+    \caption{Dependencias del \textit{AuthenticateService} mostrando inversión de dependencias}
+    \label{fig:class_diagram_service}
+\end{figure}
+
+La Figura~\ref{fig:class_diagram_service} ilustra cómo el servicio de aplicación depende de un \textit{CertificateRepository} que es una interfaz, no de una implementación concreta. Esta estructura facilita el testing unitario y permite la evolución independiente de cada capa del sistema.
+
+\subsubsection{Implementación de capa de infraestructura}
+
+La capa de infraestructura actúa como traductor entre el modelo de dominio interno y los servicios externos, siendo EJBCA REST API la dependencia principal. Esta separación permite que cambios en la API externa no afecten la lógica de negocio del sistema.
+
+La Figura~\ref{fig:infrastructure_class_diagram} muestra la estructura de clases que implementa esta capa. El \texttt{CertificateRepositoryImpl} proporciona la implementación concreta de la interfaz del dominio, delegando las operaciones HTTP al \texttt{EJBCAClient}. Este último encapsula toda la complejidad de comunicación con EJBCA, incluyendo autenticación mTLS, manejo de errores de red y serialización de respuestas JSON. El \texttt{CertificateDecoder} se especializa en transformar certificados X.509 en formato raw (Base64) a objetos de dominio estructurados utilizando las librerías OpenSSL.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{fig/infraestructure_class_diagram.png}
+    \caption{Diagrama de clases de la capa de infraestructura}
+    \label{fig:infrastructure_class_diagram}
+\end{figure}
+
+La Figura~\ref{fig:infrastructure_sequence_diagram} detalla los tres flujos principales de la capa. Durante la inicialización, la responsabilidad de proporcionar configuración válida recae en quien instancia las clases, verificándose la existencia de archivos de certificados y la validez de URLs. Los flujos operativos \texttt{is\_revoked} y \texttt{get\_certificate} siguen patrones similares: delegación HTTP, validación de respuesta y transformación de datos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{fig/infrastructure_sequence_diagram.png}
+    \caption{Diagrama de secuencia de los flujos de la capa de infraestructura}
+    \label{fig:infrastructure_sequence_diagram}
+\end{figure}
+
+Esta arquitectura garantiza que fallos de conectividad, cambios en la API de EJBCA o problemas de parsing se manejen localmente sin propagar errores al dominio, manteniendo la estabilidad del sistema de autenticación.
+
+\subsection{Estrategia de testing}
+
+La implementación del servicio de autenticación adopta una estrategia de testing centrada en pruebas unitarias que cubren sistemáticamente todas las capas de la arquitectura. Esta aproximación se justifica por tres razones fundamentales: la lógica de validación de certificados es crítica para la seguridad del sistema, los tests actúan como documentación viva del comportamiento esperado de cada componente, y proporcionan una base sólida para refactorizar código sin introducir regresiones.
+
+La cobertura de tests alcanzada es del 89\% (638 statements, 67 miss), con porcentajes particularmente altos en los módulos críticos: \texttt{application.authenticate\_service} logra 93\%,  
+\texttt{infrastructure.certificate\_repository\_impl} alcanza 91\%, \newline
+y \texttt{domain.entities.certificate} obtiene 93\%. Los módulos con menor cobertura incluyen \texttt{core.config.load\_config} con 25\% y \texttt{routes.certificate\_route} con 72\%, que representan deuda técnica manejable dado que la configuración solo se carga al arrancar y las rutas delegan la validación a capas ya testeadas.
+
+Los tests cubren cada capa de la arquitectura. En la capa de aplicación, \texttt{AuthenticateService} verifica tanto el camino feliz como las ramas de error posibles (certificado revocado, expirado, no encontrado, errores de repositorio). El cliente externo \texttt{EJBCAClient} incluye pruebas para búsqueda de certificados, verificación de revocación y manejo de errores HTTP 404 y de conectividad. Las entidades de dominio como \texttt{Certificate} y \texttt{X509PublicKey} validan restricciones de negocio (seriales válidos, fechas de expiración, formato de claves). La capa de infraestructura prueba la conversión correcta de certificados DER/PEM a entidades de dominio.
+
+\begin{lstlisting}[language=Bash, caption={Comandos para ejecutar tests del servicio}, label={cod:test_execution_commands}, captionpos=b]
+# Ejecutar todos los tests
+pytest
+
+# Generar reporte de cobertura
+pytest --cov=auth-server/app --cov-report=html
+\end{lstlisting}
+
+Tres ejemplos ilustran el estilo y granularidad de los tests implementados:
+
+\begin{lstlisting}[language=Python, caption={Ejemplos representativos de tests unitarios}, label={cod:representative_unit_tests}, captionpos=b]
+def test_authenticate_success(self, valid_certificate_fixture):
+    # Valida camino feliz: respuesta incluye clave SSH y no consulta revocacion.
+    self.certificate_repository.is_revoked.return_value = (False, None)
+    self.certificate_repository.get_certificate.return_value = (
+        valid_certificate_fixture, None)
+    
+    response, err = self.service.authenticate(self.CERT_ID, self.ROLE)
+    
+    assert err is None
+    assert response.allowed is True
+    assert "ssh-rsa" in response.authorized_keys_entry
+
+def test_get_revocation_status_not_found(ejbca_client, mock_session):
+    # Simula HTTP 404 de EJBCA y verifica manejo de certificado no encontrado.
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_session.get.return_value = mock_response
+    
+    status, err = ejbca_client.get_revocation_status("CN=Test CA", "999999")
+    
+    assert status is None
+    assert err == {"detail": "Certificate with serial 999999 not found"}
+
+def test_validate_certificate_revoked(mock_authenticate_service):
+    # Peticion HTTP con serial revocado debe retornar HTTP 403.
+    mock_authenticate_service.authenticate.return_value = (
+        AuthResponse(allowed=False), None)
+    
+    with pytest.raises(HTTPException) as exc_info:
+        validate("123ABC", "admin", mock_authenticate_service)
+    
+    assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
+\end{lstlisting}
+
+Esta estrategia de testing garantiza que modificaciones en la API de EJBCA, cambios en el mapeo a formato SSH o refactorings internos no introduzcan errores de regresión silenciosos, manteniendo la integridad del sistema de autenticación.
+Además otra ventaja de tener los tests unitarios es que actúan como documentación de cada módulo.
+
+\subsubsection{Integración continua}
+
+Para garantizar la calidad del código y detectar regresiones tempranamente, se implementó un pipeline de integración continua usando GitHub Actions\footnote{Documentación oficial de GitHub Actions: \url{https://docs.github.com/en/actions}. Específicamente, hay un tutorial que explica muy bien como configurar las acciones para un CI \href{https://docs.github.com/en/actions/get-started/quickstart\#using-workflow-templates}{aquí}}. Este sistema ejecuta automáticamente toda la suite de tests en cada push a la rama principal y en cada pull request.
+
+El pipeline se define en \texttt{.github/workflows/auth-server-ci.yml}:
+
+\begin{lstlisting}[language=Bash, caption={Pipeline de CI para el servicio de autenticación}, label={cod:github_actions_ci}, captionpos=b]
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Tests and Generate Coverage Report
+        run: docker compose -f auth-server/docker-compose.ci.yml up --abort-on-container-exit
+
+      - name: Upload Coverage Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./auth-server/coverage-reports
+
+      - name: Cleanup Docker Containers and Volumes
+        run: docker compose -f auth-server/docker-compose.ci.yml down -v
+\end{lstlisting}
+
+La configuración utiliza un \texttt{docker-compose.ci.yml} especializado que ejecuta un servicio dedicado para correr pytest con generación de reportes de cobertura en formato HTML. La flag \texttt{--abort-on-container-exit} garantiza que el workflow falle inmediatamente si algún test no pasa, proporcionando feedback rápido a los desarrolladores.
+
+El pipeline genera artefactos de cobertura visualizables en un html, permitiendo análisis detallado de líneas no cubiertas por tests.
+La implementación completa se puede ver en el repositorio definido en \ref{cod:estructura_repositorio}.
+
+\subsection{Configuraciones}
+\label{sec:server_configurations}
+El servicio de autenticación requiere configuración específica para cada entorno de despliegue, separando claramente las credenciales sensibles del código fuente. La configuración se centraliza en archivos YAML ubicados en la carpeta \texttt{config/}, siguiendo el patrón \texttt{config.<entorno>.yaml} donde el entorno se determina mediante la variable de ambiente \texttt{ENV}.
+
+\begin{lstlisting}[language=python, caption={Estructura del archivo de configuración}, label={cod:config_structure}, captionpos=b]
+# config/config.prod.yaml
+ejbca:
+  base_url: "https://ejbca-container:8443/ejbca/ejbca-rest-api"
+  certificate_path: "/code/certs/client.pem"
+  cert_password: "/code/certs/client.key"
+  issuer_dn: "CN=ManagementCA,O=Example CA,C=SE"
+\end{lstlisting}
+
+Cada entrada de configuración cumple un propósito específico. La \texttt{base\_url} especifica el endpoint completo de la API REST de EJBCA. Los campos \texttt{certificate\_path} y \texttt{cert\_password} definen las rutas a los archivos de certificado cliente y clave privada necesarios para autenticación mTLS con EJBCA. El \texttt{issuer\_dn} contiene el Distinguished Name de la autoridad de certificación que emitió los certificados a validar.
+
+Para obtener el \texttt{issuer\_dn} correcto, se puede consultar directamente desde EJBCA. Específicamente se puede obtener desde la \textit{RA Web} en la sección \textit{CA Certificates and CRLs}.
+El certificado junto con su contraseña son los de \textit{superadmin} que en su momento se usaron para acceder a la interfaz web. Hay que hacer una conversión de .p12 a .pem para el certificado y .key para la contraseña así la librería de python \textit{requests} hace correctamente las peticiones.
+
+\begin{lstlisting}[language=Bash, caption={Configuración de entornos y protección de credenciales}, label={cod:env_config_security}, captionpos=b]
+# Variables de entorno para Docker Compose
+environment:
+  - ENV=prod
+  - PROJECT_PATH=/code
+
+# Exclusion de credenciales del repositorio (.gitignore)
+config/config.prod.yaml
+config/config.dev.yaml
+certs/
+*.key
+*.pem
+\end{lstlisting}
+
+La separación entre entornos se maneja mediante archivos de configuración distintos: \texttt{config.dev.yaml} para desarrollo local con URLs como \texttt{http://localhost:8888}, y \texttt{config.prod.yaml} para producción con nombres de servicios internos de Docker. Las credenciales sensibles nunca se incluyen en el repositorio; cada entorno mantiene sus propios certificados y claves en directorios protegidos, referenciados únicamente por ruta en los archivos de configuración.
+\subsection{Pruebas reales}
+El servicio de autenticación expone documentación interactiva mediante Swagger UI, accesible en \texttt{http://localhost:8888/docs} una vez iniciado el contenedor. Esta interfaz permite probar los endpoints directamente desde el navegador, visualizar esquemas de respuesta y explorar la API sin herramientas adicionales. En el entorno productivo se puede desactivar la página de documentación\footnote{Ver la documentación de \href{https://fastapi.tiangolo.com/tutorial/metadata/\#docs-urls}{FastApi}}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig/swagger_ui_screenshot.png}
+    \caption{Interfaz Swagger UI del servicio de autenticación}
+    \label{fig:swagger_ui_screenshot}
+\end{figure}
+La interfaz Swagger permite visualizar los parámetros y respuestas posibles de cada endpoint. Además permite 
+Como alternativa para automatización o scripts, el endpoint principal puede probarse mediante cURL parametrizando la URL base según el entorno:
+
+\begin{lstlisting}[language=Bash, caption={Pruebas del endpoint mediante cURL}, label={cod:curl_testing_examples}, captionpos=b]
+# Definir URL base segun entorno
+BASE_URL="http://localhost:8888"  # desarrollo
+# BASE_URL="https://auth-service.internal"  # produccion
+
+# Probar endpoint de healthcheck
+curl -X GET "${BASE_URL}/healthcheck"
+
+# Validar certificado especifico
+SERIAL_ID="1eb97febf0e01bb7f1891cbd837087af3064740b"
+curl -X GET "${BASE_URL}/api/v1/certificate/${SERIAL_ID}/validate?username=admin" \
+     -H "Accept: application/json" \
+     -w "\nStatus: %{http_code}\n"
+
+# Ejemplo de respuesta exitosa
+# {"allowed": true, "authorized_keys_entry": "environment=\"REMOTEUSER=admin\" ssh-rsa AAAAB3... user@domain.com"}
+\end{lstlisting}
+
+La parametrización de la URL base facilita la reutilización de scripts entre entornos de desarrollo, testing y producción. Los códigos de respuesta HTTP siguen los estándares REST: 200 para certificados válidos, 403 para revocados, 404 para no encontrados y 500 para errores internos.
+
+\subsubsection{Casos de prueba manuales}
+
+\textbf{Prueba de certificado revocado}
+
+\textit{Precondición}: Revocar un certificado desde la RA Web para una entidad dada, especificando motivo de revocación (por ejemplo, "Key Compromise").
+
+\textit{Acción}: Probar la respuesta del endpoint de validación del servicio con el usuario de la entidad y serial ID correspondiente.
+
+\textit{Resultado esperado}:
+\begin{lstlisting}[language=Python, caption={Respuesta esperada para certificado revocado}]
+Code: 403
+Error: Forbidden
+Response body:
+{
+  "detail": "El certificado esta revocado."
+}
+\end{lstlisting}
+
+\textbf{Prueba de certificado válido}
+
+\textit{Precondición}: Tener un certificado emitido y vigente en EJBCA, no revocado y dentro del período de validez.
+
+\textit{Acción}: Invocar el endpoint de validación con el serial ID del certificado válido y username correspondiente.
+
+\textit{Resultado esperado}:
+\begin{lstlisting}[language=Python, caption={Respuesta esperada para certificado válido}]
+Code: 200
+Status: OK
+Response body:
+{
+  "allowed": true,
+  "authorized_keys_entry": "environment=\"REMOTEUSER=Juan Perez|tecnico\" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8... juan.perez@unc.edu.ar"
+}
+\end{lstlisting}
+
+\textbf{Prueba de certificado mal formateado}
+
+\textit{Precondición}: Generar un serial ID aleatorio y mal formateado que no corresponda a ningún certificado emitido por EJBCA (por ejemplo, \texttt{ABCDEF1234567890}).
+
+\textit{Acción}: Realizar petición al endpoint con el serial ID malformado.
+
+\textit{Resultado esperado}:
+\begin{lstlisting}[language=Python, caption={Respuesta esperada para certificado inexistente}]
+Code: 400
+Error: Bad Request
+Response body:
+{
+  "detail": "Bad Request"
+}
+\end{lstlisting}
+\subsection{Conclusión}
+La Iteración 6 constituye el núcleo funcional del proyecto al materializar toda la lógica de autenticación en código ejecutable y desplegable. El servicio implementado traduce exitosamente los requerimientos de negocio en una arquitectura en capas que separa responsabilidades y facilita el mantenimiento futuro.
+
+El desarrollo de esta iteración demostró la importancia de los tests unitarios, no solo como mecanismo de verificación sino como habilitador de refactoring continuo. Durante el proceso se realizaron múltiples reestructuraciones de código (extracción de interfaces, reorganización de capas) que fueron posibles únicamente por la confianza proporcionada por la suite de tests. Los tests de conversión de formatos resultaron especialmente valiosos, ya que el mapeo entre certificados X.509 y formato SSH requirió numerosas iteraciones de prueba y error hasta lograr compatibilidad completa con OpenSSH.
+
+Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
+
+\begin{itemize}
+    \item \textbf{REQ\_F\_IUS\_3}: El endpoint \texttt{/certificate/\{serial\_id\}/validate} requiere explícitamente el identificador del certificado como parámetro de ruta, formalizando este requerimiento en la interfaz REST.
+    \item \textbf{REQ\_F\_INF\_2}: El servicio implementa verificación completa de validez mediante consultas a EJBCA para estado de revocación, verificación de fechas de expiración y validación de formato del certificado X.509.
+    \item \textbf{REQ\_F\_INF\_4}: El sistema registra todas las operaciones de autenticación mediante logging estructurado de FastAPI y logs específicos de cada componente, permitiendo auditoría completa de accesos exitosos y fallidos.
+    \item \textbf{REQ\_F\_SYA\_4}: La arquitectura garantiza que las claves privadas permanezcan en el host del usuario; el servicio solo maneja claves públicas extraídas de certificados emitidos por EJBCA, eliminando cualquier exposición de material criptográfico sensible.
+\end{itemize}
+
+La iteración establece una base sólida para las integraciones siguientes, proporcionando un servicio robusto, bien testeado y listo para consumo por los módulos PAM de los servidores de destino.
+\section{Iteración 7: Actualizar módulo PAM usando servicio}
+\subsection{Antecedente}
+
+Al iniciar esta iteración, se cuenta con el servicio de autenticación operativo desde la Iteración 6. Este servicio se encuentra integrado con EJBCA, permitiendo la emisión, revocación y validación de certificados X.509 a través de su API REST.
+
+Adicionalmente, se dispone del entorno cliente-servidor configurado en iteraciones previas, donde el servidor destino tiene instalado PAM con soporte para módulos Python. La configuración básica del módulo PAM desarrollada en la Iteración 5 incluye las funciones principales de autenticación y gestión de sesión, pero utiliza respuestas hardcodeadas. Además la interacción con el usuario ya está solucionada también, a través de \texttt{pamh.Message} y \texttt{pamh.conversation}, permitiendo solicitar información durante el proceso de autenticación SSH.
+
+El desafío de esta iteración consiste en reemplazar la lógica estática por comunicación real con el servicio de autenticación, completando así el flujo de validación de certificados.
+
+\subsection{Desarrollo}
+
+
+La integración se resuelve reemplazando la respuesta hardcodeada del módulo PAM por una consulta HTTP al servicio de autenticación desarrollado.
+
+La arquitectura del cliente PAM se mantiene simple y autocontenida en un único archivo Python, aprovechando las capacidades de \texttt{pam\_python} para realizar llamadas a APIs externas durante el proceso de autenticación. El módulo utiliza la función \texttt{pamh.get\_user()} para obtener el nombre de usuario con el que se intenta la conexión SSH, valor que se envía como parámetro \texttt{username} al endpoint de validación del servicio.
+
+El flujo de interacción entre los componentes se ilustra en el siguiente diagrama de secuencia:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig/pam_client_sequence.png}
+    \caption{Diagrama de secuencia del flujo de autenticación del módulo PAM}
+    \label{fig:pam_client_sequence}
+\end{figure}
+
+El proceso inicia cuando el usuario proporciona el número de serie del certificado. El módulo construye la URL del endpoint de validación incorporando tanto el serial del certificado como el username obtenido del contexto de la sesión SSH. La respuesta del servicio determina si se permite o deniega el acceso: en caso positivo, el módulo extrae la entrada \texttt{authorized\_keys\_entry} de la respuesta JSON y la escribe en el archivo correspondiente del usuario, habilitando la posterior autenticación por clave pública de OpenSSH.
+Esta parte de la autenticación chequea que quien sea dueño de esa clave pública extraída del certificado sea quien realmente está solicitando acceso. Esto lo hace mediante un challenge que debe probar que el usuario tiene en su posesión la clave privada con la que se generó dicha clave pública.
+
+\subsubsection{Gestión del cierre de sesión}
+
+La función \texttt{pam\_sm\_close\_session} elimina la entrada que fue previamente insertada en el archivo \texttt{authorized\_keys}, garantizando que no queden credenciales residuales que pudieran ser utilizadas en conexiones posteriores sin pasar por el proceso de validación completo.
+
+El mecanismo de limpieza se ejecuta automáticamente cuando OpenSSH termina la sesión del usuario, independientemente de si la desconexión fue voluntaria o resultado de una interrupción de red, asegurando la consistencia del sistema de autenticación.
+
+\subsubsection{Pruebas funcionales}
+
+Se realizaron las siguientes pruebas para verificar el cumplimiento de los requerimientos:
+
+\textbf{Prueba de certificado válido}: Se conectó un usuario proporcionando el número de serie de un certificado vigente emitido por EJBCA. El sistema permitió el acceso exitosamente y se verificó la inserción temporal de la clave pública en \texttt{authorized\_keys}. Tiempo de respuesta medido, luego de insertar el \texttt{serial\_id}: 1.2 segundos.
+
+\textbf{Prueba de certificado revocado}: Se revocó un certificado desde la RA Web y posteriormente se intentó acceder con su número de serie. El sistema denegó correctamente el acceso con el mensaje \textit{El certificado no está autorizado}, cumpliendo con la validación en tiempo real del estado del certificado.
+
+\textbf{Prueba de limpieza de sesión}: Tras una conexión exitosa, se verificó que al cerrar la sesión SSH el archivo \texttt{authorized\_keys} quedara limpio, requiriendo nueva autenticación para conexiones posteriores del mismo usuario.
+
+\textbf{Prueba de servicio no disponible}: Se detuvo temporalmente el servicio de autenticación y se intentó una conexión. El módulo PAM manejó correctamente el error de conectividad, denegando el acceso y registrando el fallo en los logs del sistema.
+
+\subsection{Conclusión}
+
+La Iteración 7 logra la integración exitosa entre el módulo PAM y el servicio de autenticación, completando el flujo de validación de certificados X.509 para acceso SSH. El sistema resultante permite autenticación transparente basada únicamente en el número de serie del certificado, eliminando la necesidad de configuración manual de claves públicas en los servidores destino.
+
+La implementación cumple con los tiempos de respuesta requeridos y maneja adecuadamente los casos de error, proporcionando una base sólida para el despliegue en el entorno productivo. La limpieza automática de credenciales al finalizar las sesiones garantiza que cada acceso requiera validación fresca del estado del certificado, manteniendo la integridad del sistema de autenticación.
+
+\section{Iteración 8: Incluir mTLS como forma de autenticación mutua entre servicio de autenticación y servidores}
+\subsection{Antecedente}
+
+Al finalizar la Iteración 7, el sistema cuenta con comunicación HTTP simple entre los módulos PAM de los servidores y el servicio de autenticación. Si bien esta implementación permite la validación funcional de certificados, presenta una vulnerabilidad crítica: cualquier cliente con acceso de red al servicio de autenticación puede realizar consultas de validación sin autenticación previa.
+
+Esta configuración expone el sistema a potenciales ataques donde un actor malicioso podría enumerar números de serie de certificados válidos o sobrecargar el servicio con consultas no autorizadas. La implementación de autenticación mutua mediante mTLS resuelve esta vulnerabilidad estableciendo un canal de comunicación donde tanto el cliente como el servidor deben presentar certificados válidos emitidos por la misma autoridad de certificación.
+
+\subsection{Desarrollo}
+
+\subsubsection{Configuración del proxy inverso Nginx}
+
+La implementación de mTLS se realiza mediante un proxy inverso Nginx que actúa como terminador TLS, verificando los certificados cliente antes de reenviar las solicitudes al servicio FastAPI. Esta arquitectura permite centralizar la validación de certificados y simplifica la configuración del servicio de autenticación.
+
+La configuración se implementa mediante un contenedor Nginx separado dentro del mismo archivo \texttt{docker-compose.yml}. El servicio FastAPI deja de exponerse directamente, siendo accesible únicamente a través del proxy Nginx en el puerto 443.
+
+Se introduce en el proyecto un archivo \texttt{nginx.conf}\footnote{Documentación completa de configuración Nginx disponible en: https://nginx.org/en/docs/. La implementación completa del archivo se puede ver en el repositorio de github ya mencionado.} que establece la configuración de mTLS mediante las siguientes directivas:
+
+\begin{itemize}
+    \item \texttt{listen 443 ssl}: Configura Nginx para escuchar en el puerto 443 con soporte SSL/TLS habilitado, estableciendo el punto de entrada seguro para todas las conexiones.
+    \item \texttt{ssl\_certificate} y \texttt{ssl\_certificate\_key}: Definen el certificado del servidor y su clave privada correspondiente que Nginx presenta a los clientes durante el handshake TLS, autenticando la identidad del servicio de autenticación.
+    \item \texttt{ssl\_client\_certificate}: Especifica el certificado de la CA que debe haber firmado los certificados cliente para considerarlos válidos durante la verificación mTLS.
+    \item \texttt{ssl\_verify\_client on}: Habilita la verificación obligatoria de certificados cliente, rechazando conexiones que no presenten un certificado válido firmado por la CA especificada.
+    \item \texttt{proxy\_pass http://fastapi-auth:8888}: Redirige las solicitudes autenticadas al servicio FastAPI ejecutándose en el contenedor interno, actuando como gateway entre el tráfico externo cifrado y el servicio de aplicación interno.
+    \item \texttt{access\_log /var/log/nginx/access.log}: Registra todas las solicitudes HTTP procesadas por Nginx, incluyendo información sobre verificación de certificados cliente y códigos de respuesta, facilitando la auditoría y debugging del sistema.
+\end{itemize}
+\subsubsection{Creación de perfil de certificado para servidores}
+
+Para emitir certificados compatibles con autenticación mTLS, se requiere crear un nuevo Certificate Profile en EJBCA que incluya las extensiones necesarias para autenticación cliente y servidor. El proceso inicia clonando el perfil \texttt{ENDUSER} existente para aprovechar la configuración base.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig/certificate_profile_mtls.png}
+    \caption{Configuración de Extended Key Usage para el perfil MTLS\_AUTH\_SERVERS}
+    \label{fig:certificate_profile_mtls}
+\end{figure}
+
+La configuración importante se encuentra en la sección \textit{Extended Key Usage}, donde debe habilitarse\footnote{En la figura \ref{fig:certificate_profile_mtls} no se visualiza de manera completa la selección de ambas opciones, pero se deben seleccionar ambas en el selector. 
+Un detalle a notar es que en el navegador \textit{Chrome} no se puede, por el tipo de selector, seleccionar ambos. No obstante en \textit{Firefox}, si se deja seleccionado Alt + Clic, sí es posible. 
+Como alternativa para sortear este inconveniente, se puede crear el perfil usando la opción de Importación que permite hacer este mismo proceso, pero con un archivo en vez de estar seleccionando manualmente las opciones.} tanto \textit{Client Authentication} como \textit{Server Authentication}.
+Sin estas extensiones, Nginx rechazará los certificados durante el proceso de verificación mTLS. El perfil resultante se denomina \texttt{MTLS\_AUTH\_SERVERS} y se asocia en la siguiente sección con un End Entity Profile \texttt{SERVER} que define los campos requeridos para servidores.
+
+
+\subsubsection{Configuración de perfil de entidad final \texttt{SERVER}}
+Seguidamente, para poder emitir certificados que puedan ser utilizados para el propósito de mTLS en los servidores internos de la red es conveniente que se cree un nuevo perfil de entidad final para este fin.
+En el caso de este proyecto, le llamamos \texttt{SERVER}.
+Para ello en la web de administración de EBJCA, en la sección \textit{RA Functions - End Entity Profiles} se crea un nuevo perfil clonando el ya existente \texttt{EMPTY}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{fig/server_end_entity_profile_screenshot.png}
+    \caption{Ejemplo de cómo se vería la configuración de este perfil de entidad final \texttt{SERVER}}
+    \label{fig:server_end_entity_profile_screenshot}
+\end{figure}
+Como se ve en la figura \ref{fig:server_end_entity_profile_screenshot} el perfil requiere como obligatorio un \textit{CommonName}, que en este proyecto se usará como el nombre del servidor.
+Además otra configuración importante es \textit{Available Certificate Profiles} en la cual se selecciona como único perfil de certificado posible al recientemente creado \texttt{MTLS\_AUTH\_SERVERS}. 
+
+\subsubsection{Emisión de certificado para servidor destino}
+
+La emisión de certificados para servidores se realiza desde la RA Web utilizando el perfil \texttt{SERVER} configurado. El proceso simplifica la gestión al permitir que la CA genere el par de claves, evitando la complejidad de crear y transferir CSRs.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig/server_certificate_request.png}
+    \caption{Solicitud de certificado para servidor desde RA Web}
+    \label{fig:server_certificate_request}
+\end{figure}
+
+En la figura \ref{fig:server_certificate_request} se ve que para el servidor destino1op se configura \texttt{CN=destino1op} como Common Name, junto con credenciales administrativas\footnote{El nombre de usuario y contraseña que se quieran poner para cada certificado no es alcance de este proyecto y depende enteramente de la política de quién implementa el sistema.} (username y enrollment code). Cuando se emite el certificado se permite descargar, por única vez, el certificado en formato PKCS\#12, que llamaremos \texttt{server.p12}.
+Tener en cuenta que luego, si se accede desde la sección de búsqueda al certificado no se puede descargar más en este formato, en el que está incluida la clave privada.
+\subsubsection{Conversión de certificados para el servicio de autenticación}
+El servicio de autenticación requiere que Nginx presente su propio certificado durante el handshake TLS. Para esto se utiliza el certificado \texttt{server.p12} recientemente descargado en la sección anterior en formato PKCS\#12 desde EJBCA, convirtiéndolo a los formatos PEM requeridos por Nginx.
+
+La conversión del archivo \texttt{server.p12} se realiza mediante OpenSSL:
+
+\begin{itemize}
+    \item \textbf{Extracción del certificado}: \texttt{openssl pkcs12 -in server.p12 -clcerts -nokeys -out server.pem}
+    \item \textbf{Extracción de la clave privada}: \texttt{openssl pkcs12 -in server.p12 -nocerts -nodes -out server.key}
+\end{itemize}
+La contraseña que se pida en la extracción de claves y certificado es la que se proporcionó como \textit{enrollement code}.
+Los archivos resultantes \texttt{server.pem} y \texttt{server.key} son los que corresponden a las directivas \texttt{ssl\_certificate} y \texttt{ssl\_certificate\_key} en la configuración de Nginx.
+
+\subsubsection{Creación de certificado para clientes}
+Ahora resta solamente hacer el mismo proceso que se hizo para el servicio, pero para los clientes (en nuestro proyecto el servidor bastión y destino).
+Llamamos a los archivos generados, luego de emitir un certificado para los servidores destino, \texttt{client.pem} y \texttt{client.key}
+
+El módulo PAM Python requiere modificaciones para soportar autenticación cliente mediante certificados. La librería utilizada, \texttt{urllib2},  permite configurar contextos SSL personalizados para incluir certificados cliente en las solicitudes HTTPS.
+
+La implementación configura un contexto SSL que carga tanto el certificado cliente como su clave privada correspondiente.
+\begin{lstlisting}[language=Python, caption={Ejemplo de configuración mTLS en el módulo PAM}]
+# Configurar el contexto SSL con los certificados
+ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        
+# Cargar certificado y llave del cliente
+ctx.load_cert_chain(
+    certfile='client.pem',  # Ruta al certificado del cliente
+    keyfile='client.key'    # Ruta a la llave privada del cliente
+)
+# Verificacion del certificado del servidor
+ctx.load_verify_locations('ca.crt')  # Ruta al certificado CA        
+
+# Crear solicitud HTTPS
+request = urllib2.Request(url)
+        
+# Abrir la conexion con el contexto SSL
+response = urllib2.urlopen(request, context=ctx)
+\end{lstlisting}
+        
+\subsubsection{Distribución de certificados y configuración}
+
+La distribución de certificados requiere tres archivos en cada servidor:
+
+\begin{itemize}
+    \item \texttt{client.pem}: Certificado del servidor emitido por EJBCA
+    \item \texttt{client.key}: Clave privada extraída del archivo PKCS\#12 inicial
+    \item \texttt{ca.pem}: Certificado de la CA para verificar el servidor de autenticación
+\end{itemize}
+
+El certificado de la CA se obtiene desde la sección \textit{CA Certificates and CRLs} de la misma manera que ya se explicó en \ref{sec:server_configurations}.
+
+\subsubsection{Pruebas funcionales}
+
+Se realizaron las siguientes verificaciones para confirmar el funcionamiento de mTLS:
+
+\textbf{Autenticación exitosa con certificado válido}
+\begin{itemize}
+    \item \textit{Precondición}: Servidor destino configurado con certificado emitido por la CA y módulo PAM actualizado.
+    \item \textit{Acción}: Usuario intenta conectarse proporcionando número de serie de certificado válido.
+    \item \textit{Resultado esperado}: Conexión SSH exitosa, logs de Nginx muestran verificación TLS exitosa.
+\end{itemize}
+
+\textbf{Rechazo de conexión sin certificado cliente}
+\begin{itemize}
+    \item \textit{Precondición}: Servidor sin certificados configurados intenta consultar el servicio de autenticación.
+    \item \textit{Acción}: Módulo PAM realiza solicitud HTTPS al servicio.
+    \item \textit{Resultado esperado}: Nginx rechaza la conexión con error SSL, módulo PAM retorna \texttt{PAM\_AUTH\_ERR}.
+\end{itemize}
+
+\textbf{Rechazo de certificado no válido}
+\begin{itemize}
+    \item \textit{Precondición}: Servidor configurado con certificado emitido por CA diferente a PSI-CA.
+    \item \textit{Acción}: Intento de consulta al servicio de autenticación.
+    \item \textit{Resultado esperado}: Nginx rechaza el certificado, conexión SSL falla con error de verificación.
+\end{itemize}
+
+\textbf{Verificación de logs de auditoría}
+\begin{itemize}
+    \item \textit{Precondición}: Sistema operativo con múltiples intentos de autenticación exitosos y fallidos.
+    \item \textit{Acción}: Revisión de logs de Nginx y del servicio de autenticación.
+    \item \textit{Resultado esperado}: Logs muestran verificación de certificados cliente y rechazo de conexiones no autorizadas.
+\end{itemize}
+
+\subsection{Conclusión}
+
+La Iteración 8 establece un canal de comunicación seguro y autenticado entre los servidores bastion, destino y ejbca mediante mTLS. La implementación elimina la vulnerabilidad de acceso no autorizado al servicio de autenticación, garantizando que únicamente servidores con certificados válidos emitidos por la CA autorizada puedan realizar consultas de validación.
+
+La solución implementada mantiene la simplicidad operativa al centralizar la verificación de certificados en el proxy Nginx, mientras que el servicio de autenticación permanece enfocado en su lógica de negocio sin complejidad adicional de manejo TLS.

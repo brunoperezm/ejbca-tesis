@@ -1,0 +1,46 @@
+%Descripción del Problema:
+%Presenta el contexto general de la tematica del trabajo.
+%Describe las limitaciones actuales existentes.
+%Expón la necesidad de mejorar este sistema.
+
+%Antecedentes:
+%Menciona estudios previos sobre el tema.
+%Señala enfoques y soluciones propuestas, pero subraya sus limitaciones (por ejemplo, complejidad de implementación, costos, etc.).
+%Identifica las brechas que aún existen en el conocimiento y las prácticas actuales.
+
+%Justificación:
+%Explica la importancia de mejorar el sistema.
+%Resalta la relevancia de tu investigación para una organización y su impacto positivo.
+%Justifica cómo tu estudio contribuye al campo académico o profesional.
+
+
+\chapter{Introducción}\label{cap:introduccion}
+
+\section{Descripción del Problema}
+
+En la actualidad, las organizaciones dependen cada vez más de la infraestructura de TI para gestionar información sensible y facilitar el acceso a sistemas remotos de manera eficiente. Uno de los mecanismos más utilizados para la autenticación remota es el protocolo SSH, que garantiza la comunicación segura a través de redes no confiables. 
+Sin embargo, a pesar de su eficacia y popularidad, el sistema de autenticación SSH en su uso más esencial presenta limitaciones en términos de seguridad y usabilidad. Específicamente, la autenticación basada en contraseñas es vulnerable a ataques de fuerza bruta y otros tipos de intrusión, mientras que el sistema de claves públicas no siempre está configurado correctamente, lo que pone en riesgo la integridad de los sistemas protegidos. 
+Además, el proceso de implementación y mantenimiento de estas autenticaciones resulta ser complejo y propenso a errores humanos, lo que afecta la eficiencia operativa.
+
+Por lo tanto, se hace evidente la necesidad de revisar y mejorar el sistema de autenticación SSH de una organización a la que uno pertenece, buscando una solución que no solo sea más robusta desde el punto de vista de la seguridad, sino también más eficiente y sencilla de administrar.
+
+En nuestro caso nos encontramos con la PSI de la UNC, la cual cuenta con múltiples servidores, a los que tiene que gestionar el acceso a los mismos para distintos operarios, con distintos roles y permisos de acceso, y una alta rotación, lo que no solo pone el foco en la seguridad, si no también en la escalabilidad del sistema implementado.
+
+\section{Antecedentes}
+
+Diversos estudios y prácticas han demostrado que SSH es uno de los protocolos más seguros y utilizados para la administración remota de servidores y dispositivos. Según investigaciones previas, las autenticaciones mediante contraseñas son vulnerables a ataques de diccionario, MitM y fuerza bruta (Himanshu, 2024). 
+Esto ha llevado a la recomendación de adicionar nuevos métodos de autenticación, como el de claves públicas, lo que mejora significativamente la seguridad al eliminar la dependencia de las contraseñas del proceso de autenticación.
+Sin embargo, estudios como los de Owens y Jeanna (2008) sugieren que la implementación de este sistema también conlleva desafíos relacionados con la gestión y distribución de claves, especialmente en entornos empresariales con gran cantidad de servidores y usuarios.
+
+Además, varios enfoques han propuesto alternativas, como la autenticación mediante MFA, para superar las limitaciones de seguridad del sistema basado solo en claves. Sin embargo, existen también estudios que prueban la vulnerabilidad a ataques de estos métodos, y como la implementación de estos sistemas puede llegar a ser redundante, ya que los usuarios pueden presentar fatiga en su uso e ignoran el comportamiento sospechoso (Tolbert, 2021).
+
+Pese a los avances en la seguridad de los sistemas SSH, la configuración adecuada y el mantenimiento eficiente siguen siendo problemas recurrentes en muchas organizaciones, lo que genera vulnerabilidades adicionales. Estos antecedentes demuestran que, aunque se han propuesto soluciones, no existe un sistema perfecto que combine seguridad, facilidad de uso y bajo coste.
+
+\section{Justificación}
+
+Mejorar el sistema de autenticación SSH en una organización no solo es crucial para mitigar los riesgos de seguridad, sino que también puede optimizar la eficiencia operativa. 
+
+Al implementar un sistema de autenticación más robusto, como la mejora en la gestión de claves y su aplicación en servidores, se espera reducir significativamente la vulnerabilidad ante ataques cibernéticos, proteger datos sensibles y garantizar un acceso más controlado y libre de intervención manual aumentando la escalabilidad. 
+La solución propuesta implementando una infraestructura de clave pública también tiene el potencial de simplificar la administración del sistema, reduciendo el riesgo de errores humanos y permitiendo cumplir rol administrativo a personal con la jerarquía necesaria, aunque no posea conocimientos técnicos avanzados.
+
+A nivel académico, este estudio podría contribuir a las investigaciones sobre mejoras en la seguridad de SSH en entornos corporativos, proporcionando un caso de estudio práctico que otros profesionales en el campo podrían replicar o adaptar. Además, los resultados podrían servir de base para el desarrollo de nuevas directrices y herramientas que mejoren la integración y administración de la autenticación SSH en otras organizaciones con características similares.

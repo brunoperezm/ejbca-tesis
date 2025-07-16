@@ -1,0 +1,339 @@
+%Este capitulo deberia ser el diseño propuesto para resolver el sistema.
+\chapter{Diseño}\label{cap:diseño}
+
+\section{Selección de Componentes}
+
+Al comenzar a desarrollar el proyecto, se tomaron decisiones sobre componentes de hardware y software sobre el que trabajar, por necesidad, idoneidad o conveniencia
+
+\subsection{Servidor DELL}
+
+Para tener una plataforma estable sobre la que trabajar durante largos periodos de tiempo, que no estuviera atado a un participante del proyecto en particular, y especialmente para poder simular de la mejor manera la infraestructura de la PSI, era necesario el uso de un servidor.
+
+En el LARyC de la FCEFyN se encontraba un servidor Dell PowerEdge R210 II\cite{Servidor} con:
+
+\begin{itemize}
+    \item 4 CPUs x Intel(R) Xeon(R) CPU E31220 @ 3.10GHz
+    \item 8GB de memoria RAM
+    \item Disco Duro Dell de 250GB
+    \item 2 interfaces de Red FastEthernet
+\end{itemize}
+
+El mismo cumplía con nuestras necesidades y se decidió utilizarlo sin realizar mayor análisis.
+
+\subsection{VMware ESXi 6.7}
+
+Para imitar el entorno de maquinas virtuales de PSI, es necesario el uso de un software de virtualización de tipo 1.
+
+Entre los más conocidos se pueden encontrar VMware ESXi, Proxmox VE, Nutanix AHV, entre otros.
+
+VMware ESXi\cite{VMware_ESXi} es un software de virtualización de tipo 1, que al momento de iniciar este proyecto era utilizado por la PSI en su infraestuctura de servidores, por lo tanto es el elegido para llevar adelante el proyecto.
+
+Si bien VMware ya cuenta con versiones de firmware mucho más avanzadas, se hace uso de una anterior como la versión 6.7, dado que:
+
+\begin{itemize}
+    \item El servidor no soporta las versiones siguientes.
+    \item VMware es comprado por Broadcom\cite{Broadcom_VMware} en 2023, y deja de ofrecer licencias gratuitas, dando lugar al uso de licencias gratuitas con fines educativos\cite{Licencias} no existentes ya en las últimas versiones.
+\end{itemize}
+
+\subsection{Ubuntu Server 20.04.6}
+
+Ubuntu Server es una excelente opción para servidores virtuales debido a su estabilidad, facilidad de uso, amplio soporte de software, comunidad activa, y rendimiento. 
+
+Ubuntu proporciona la flexibilidad y las herramientas necesarias para crear, administrar y escalar nuestra infraestructura virtual de manera eficiente, específicamente, para las herramientas de OpenSSH, Python, y Docker que son menesteres en el proyecto.
+
+Entre todas sus distribuciones, se elige hacer uso de su versión 20.04.6 LTS por tener ya varios años de soporte ofreciendo una versión estable, sin tener que arriesgarse a encontrar un problema con versiones posteriores.
+
+\subsection{EJBCA Docker Bitnami}
+
+En sus inicios EJBCA solamente podía ser instalado de forma local, sin embargo, con el paso del tiempo, a medida que su desarrollo y el de la tecnología fue avanzando, se implemento además otras formas de instalarlo, como el dockerizado\cite{EJBCA_docker}.
+
+La instalación de un servicio en Docker, en lugar de de forma local, ofrece una solución más robusta, flexible y escalable. Además, simplifica la gestión de dependencias, mejora la seguridad, y permite gestionar el ciclo de vida de la aplicación de manera más eficiente, por lo que se elige avanzar en el proyecto con la instalación de nuestro laboratorio de firma digital, con un EJBCA en Docker.
+
+Keyfactor, ofrece una versión de EJBCA para docker para realizar pruebas, sin embargo, decidimos utilizar un contenedor producido por Bitnami\cite{Bitnami_EJBCA} por varias razones.
+
+En primer lugar, si bien ahora la versión oficial lo permite, al momento de iniciar el proyecto, la base de datos se encontraba dentro del mismo contenedor, y no estaba persistida, mientras que Bitnami ofrecía ya desarrollado una alternativa con la base de datos en un segundo contenedor, y con la información persistida, era mejor opción para encarar un proyecto a largo plazo.
+
+En segundo lugar, la imagen que ofrece Keyfactor, es una imagen ya terminada, mientras que la de Bitnami, es posible acceder al repositorio\cite{Bitnami_EJBCA_Github} con todos los pasos que siguen para crear la imagen, de forma que permite de forma más sencilla realizar modificaciones a la misma.
+
+Por otro lado, el usar una imagen mantenida por un tercero confiable, en lugar de crear una imagen propia de un principio, permite enfocar el proyecto en la explotación del servicio, en lugar de hacerlo en su forma de alta. 
+
+En el caso de Bitnami, además de ofrecer una imagen, se puede encontrar con facilidad imágenes de versiones anteriores, y encontrarse con actualizaciones constantes. Además de existir el precedente de que al encontrarse una vulnerabilidad, se encargan de modificar o eliminar el problema de sus contenedores.
+
+Finalmente, se entiende que la forma de trabajo promocionadas por Bitnami cumplen con buenas practicas y medidas de seguridad\cite{Politicas_Bitnami}, tales como:
+
+\begin{itemize}
+    \item \textbf{Etiquetas}
+    \begin{itemize}
+        \item Se actualizan junto a nuevos lanzamientos.
+        \item Tiene etiquetas tanto dinámicas como inmutables.
+    \end{itemize}
+
+    \item \textbf{Contenedores sin privilegios root:}
+    \begin{itemize}
+        \item Al hacer los contenedores con usuarios sin privilegios, se evita problemas de seguridad relacionados a ese aspecto (aunque se puede configurar para correrlo como root).
+    \end{itemize}
+
+    \item \textbf{Uso de UUIDs arbitrarios:}
+    \begin{itemize}
+        \item Algunas plataformas montan sus contenedores asignándole al usuario un id aleatorio. Bitnami configura sus imágenes para que puedan soportar esos requerimientos.
+    \end{itemize}
+
+    \item \textbf{Ejecutar un proceso por contenedor:}
+    \begin{itemize}
+        \item En lo posible tratan de que cada contenedor ejecute un solo proceso, y si para un programa hace falta ejecutar varios, entonces se crean contenedores desacoplados.
+        \item En caso de que haga falta tener más de un proceso, lo hacen, pero tratan de tener la menor cantidad posible.
+    \end{itemize}
+
+    \item \textbf{Procesos, credenciales y puertos seguros:}
+    \begin{itemize}
+        \item No permite que el contenedor sobrepase el sistema de autenticación del host.
+        \item No permite que los contenedores tengan ejecutables que puedan escalar permisos.
+        \item No dejan contraseñas en las imágenes.
+        \item Cambia los puertos de privilegiados a no privilegiados (por ejemplo, 80 a 8080, 443 a 8443).
+    \end{itemize}
+
+    \item \textbf{Mejora de rendimiento al mantener imágenes pequeñas:}
+    \begin{itemize}
+        \item En la imagen del contenedor se utiliza solo la cantidad mínima y necesaria de dependencias.
+    \end{itemize}
+
+    \item \textbf{Proceso de compilación y lanzamiento diario:}
+    \begin{itemize}
+        \item Cada 24 horas relanzan su catálogo entero para que al usarlos, tengas la última versión.
+    \end{itemize}
+
+    \item \textbf{Escaneo de virus CVE:}
+    \begin{itemize}
+        \item A la hora de lanzar una nueva versión, se revisa con un antivirus, y si encuentra algo malicioso, lo detiene.
+        \item Periódicamente también realizan una revisión con un escáner de CVE.
+    \end{itemize}
+
+    \item \textbf{Pruebas de verificación y funcionamiento:}
+    \begin{itemize}
+        \item A la hora de hacer un nuevo lanzamiento, primero lo prueban en las plataformas que deberán soportarlo.
+        \item Los tests que realizan son de verificación y funcionamiento.
+    \end{itemize}
+
+    \item \textbf{FIPS:}
+    \begin{itemize}
+        \item Utiliza los métodos criptográficos deseados por el cliente, siempre y cuando sean algoritmos aprobados por el FIPS.
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{Certificados X.509}
+%No existe el "Certificado SSH"
+
+El motivo que lleva a elegir utilizar certificados X.509, en lugar de otros tales como los certificados SSH, dado que si bien los certificados SSH son los únicos que se pueden utilizar nativamente con OpenSSH, permitiendo solventar fácilmente algunos de los desafíos encontrados en este proyecto, tan solo sirven para este fin, mientras que los certificados X.509 al ser el estándar de la industria, usan una tecnología mas robusta, y esta presente en la mayoría de los servicios, por lo que se podrán usar los certificados emitidos no solo para este fin, si no también para firmar documentos por ejemplo.
+
+\section{Topología de Red}
+\label{sec:topología_de_red}
+
+La Figura \ref{fig:Topologia de Red} presenta la disposición física y lógica empleada de la implementación final. 
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/Topologia.png}
+    \caption{Topología de Red}
+    \label{fig:Topologia de Red}
+\end{figure}
+
+En este caso, el servidor físico se encuentra conectado al router \textit{LARyC}, en el cual nos abstraemos de la red de la facultad, y lo reconocemos como la salida a Internet.
+
+El servidor VMware, tiene 2 switch virtuales, el \textit{vSwitch0} que conecta al servidor proxy \textit{Bastion} al router LARyC. Por su lado, el \textit{vSwitch1} presenta la VLAN 5 con la red 10.10.5.0/24 configurado, y la VLAN 7 con la red 10.10.7.0/24.
+
+La idea original era tener aislados a los distintos servidores a los que se pudieran buscar conectar, denominados como Destino\textless{} x\textgreater{}, del servidor del EJBCA, siendo solo el Bastion quien pudiera formar parte de ambas VLAN.
+
+Sin embargo, al avanzar en el proyecto y tomar decisiones de diseño que evidenciaran la necesidad de los servidores destino de poder llegar al EJBCA para relacionarse con el servicio allí configurado, se decidió agregar a los destinos a VLAN 5, para evitar centrar más la atención en gestión de rutas, esto conlleva las precauciones adicionales para que solamente el servicio pueda ser accesible desde los destinos, y SSH escuche solamente al Bastion.
+
+
+Como se puede notar, entre las tres VMs, únicamente Bastion tiene salida a Internet. Dado el carácter crítico de EJBCA, es conveniente mantenerla lo más aislada posible. Sin embargo, es posible que los servidores destino necesiten acceso externo. En esta topología para lograr eso, la red 10.10.7.0/24 debería ser redirigida (NATeada) a través de Bastion.
+
+Alternativamente, se podría conectar directamente al vSwitch0 y permitir que tenga salida propia. En ese caso, para asegurar el funcionamiento planteado en este proyecto, será necesario realizar configuraciones adicionales que limiten las conexiones entrantes por SSH exclusivamente a aquellas provenientes de Bastion.
+
+
+\section{Diseño de Trabajo}
+
+Durante el desarrollo del trabajo, se tuvieron que tomar decisiones de diseño generales sobre como debería funcionar el sistema en su conjunto, incluyendo una vez estuviera en producción. En definitiva, estas decisiones tomadas representan políticas internas de una organización, y podría decidirse por tomar alternativas. Se considera que las planteadas aseguran un correcto funcionamiento, así como también un procedimiento que asegura la seguridad integral del sistema.
+El diseño de la arquitectura del trabajo se puede describir usando un diagrama de contexto c4, de la siguiente manera:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{fig/systemView.png}
+    \caption{Diagrama de contexto del sistema completo.}
+    \label{fig:system-context-diagram}
+\end{figure}
+
+En el diagrama \ref{fig:system-context-diagram}  se observan cuales son los componentes que integran el sistema:
+
+\begin{enumerate}
+    \item Servidor proxy nombrado Bastion
+    \item Servidor EJBCA, que deberá validar los certificados
+    \item  Servidor destino  al que se quiere ingresar, que pueden ser N destinos
+    \item Servicio de autenticación
+    \item Host de usuario
+\end{enumerate}
+
+También se observa en \ref{fig:system-context-diagram} cómo se relacionan entre sí dichos componentes.
+Las relaciones de entre los componentes  son como los que detalla la figura \ref{fig:system-context-diagram}:
+
+\begin{itemize}
+    \item El host de usuario cuando quiere autenticarse con un servidor destino, lo hará a través de el servidor Bastion usando SSH.
+    \item Bastion comprueba que la información provista por el usuario sea válida con el servicio de autenticación.
+    \item El servicio de autenticación comprueba la validez de la información con EJBCA.
+    \item  Bastion redirige solicitud de conexión con el servidor destino.
+    \item Servidor destino comprueba (al igual que Bastion) la validez de la información provista por el usuario.
+\end{itemize}
+
+\subsection{Uso de proxy de autenticación - Bastion}
+
+El uso de un servidor intermedio para autenticar un usuario, en vez de hacer que el usuario se autentique de manera directa con el servidor destino responde a que en este proyecto se propone que se debe hacer el proceso completo de autenticación haciendo uso del par de claves apoyándose en el EJBCA, para autenticarse tanto contra el Bastion como contra el servidor destino.
+
+Esta decisión se tomó en base a dos principales motivos.
+
+En primer lugar, la necesidad de autenticarse con Bastion responde a que al ser este el servidor proxy, para realizar el salto al destino, es obligatorio primero autenticarse contra el mismo, y además, al ser el servidor expuesto para ser ingresado desde fuera de la red interna, la necesidad de tener restringido la autenticación al mismo es mayor, por lo que tiene sentido requerir todas las medidas de seguridad a implementar.
+
+En segundo lugar, el usuario necesita autenticarse también nuevamente en el servidor destino dado que, de no implemetar esta medida de seguridad, si por algún motivo algún atacante consiguiera acceso a Bastion, tendría acceso sin restricciones a todo el sistema.
+
+\subsection{Servicio de autenticación}
+
+El servicio de autenticación es el sistema encargado de validar que los certificados presentados por los usuarios sean válidos, vigentes y no estén revocados. Su función principal es consultar a EJBCA para verificar el estado de los certificados y, si son válidos, extraer información relevante para continuar con el proceso de autenticación.
+
+Por lo tanto, la autenticación a los servidores dependerá de la información provista por esta comunicación entre servidores dentro de nuestro sistema. La comunicación SSH por protocolo se encuentra protegida por encriptación, por lo que resulta contradictorio implementar un paso previo que presente una vulnerabilidad, por lo que se resuelve proteger esta comunicación de igual manera. 
+Para hacerlo, se hace uso de un proxy inverso con Nginx que recibe las conexiones entrantes al servicio de autenticación, y con mTLS lo valida y encripta la comunicación entre las partes.
+
+El proxy actúa como intermediario entre los servidores y el servicio de autenticación. Sus responsabilidades son:
+
+\begin{enumerate}
+\item Asegurar que únicamente servidores autorizados puedan comunicarse con el servicio de autenticación, rechazando conexiones no autenticadas.
+\item Unificar el punto de entrada al servicio.
+\item Prevenir el acceso directo a EJBCA desde otros componentes: dado que EJBCA está alojado en el mismo servidor que el servicio de autenticación, y sólo este último tiene visibilidad directa hacia él, cualquier interacción externa debe pasar por el proxy.
+\end{enumerate}
+
+En la Figura \ref{fig:auth_service_container} se muestra un diagrama a nivel de contenedor utilizando el modelo C4, que ilustra las interacciones entre los componentes del sistema y el rol que cumple el servicio de autenticación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{fig/landscape_auth.png}
+\caption{Diagrama C4 a nivel contenedor que muestra las interacciones del servicio de autenticación}
+\label{fig:auth_service_container}
+\end{figure}
+
+Se observa más en detalle en la \ref{fig:auth_service_container} que todas las peticiones que llegarían a \textit{Auth service} son interceptadas por el proxy server.
+Otro detalle importante a resaltar es que AuthService es el único componente del sistema que se conecta de manera directa con EJBCA.
+
+\subsection{Servidores Destino y Bastion}
+Los servidores, que pueden ser Bastion o los servidores destino, son los servidores a los que puede intentar acceder los usuarios.
+Los servidores contienen un daemon SSH (OpenSSH server) que permite que los usuarios finales se conecten.
+
+La comprobación de la validez y veracidad de la información del usuario se hace utilizando el servicio de autenticación.
+
+Para hacer esta comunicación se utiliza PAM el cual permite añadir lógica personalizada de autenticación a SSH a la hora de permitir o denegar usuarios.
+Cuando se habilita el módulo PAM, este intercepta el proceso de autenticación normal de SSH y permite que se consuma el servicio el servicio de autenticación para incluirlo antes de reanudar el proceso estándar de SSH. 
+PAM Python es un módulo PAM que permite escribir lógica de autenticación personalizada usando python, sin requerir hacer un módulo PAM compilado en C.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{fig/landscape_servers.png}
+    \caption{Diagrama de componente que muestra cómo es una conexión a través de Bastion hacia un servidor destino}
+    \label{fig:landscape_servers}
+\end{figure}
+
+La única diferencia entre un servidor Bastion y un servidor destino es que cuando se haya completado la autenticación del usuario en el servidor Bastion este va a redirigir el intento de conexión al servidor destino en lugar de permitir el acceso al mismo.
+Una vez el destino haya recibido la solicitud de acceso del Bastion, iniciará los mismos pasos para validar la autenticación que es realizó anteriormente el servidor proxy.
+Finalmente, si se ha validado la autenticación del usuario se le permite el ingreso al servidor destino.
+En caso de que en cualquier instancia se haya rechazado la autenticación del usuario, el mismo tendrá el acceso restringido al sistema.
+
+\subsection{EJBCA}
+
+EJBCA internamente tiene muchos sistemas y componentes. En lo que compete a este proyecto se mencionan 4:
+\begin{itemize}
+    \item EJBCA RA Web: es una página que permite que el oficial de registro dé de alta usuarios y genere certificados en favor de los mismos. En el caso particular de este proyecto el oficial de registro usa un CSR provisto por el usuario que contiene los datos del mismo. 
+    \item EJBCA CA: Es la parte del sistema que permite configurar cómo son los certificados, quién los emite, cuál es el perfil de entidad final, etc.
+    \item EJBCA VA: Es la parte de sistema que permite validar si está revocado o no un certificado.
+    \item EJBCA REST API: Es el punto de entrada del servicio de autenticación para la comunicación con EJBCA.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{fig/structurizr-1-Container-002.png}
+    \caption{Diagrama de contenedor C4 que permite visualizar los componentes internos de EJBCA y la relación entre los mismos y con las partes del sistema del proyecto.}
+    \label{fig:container_diagram}
+\end{figure}
+
+\subsection{Host de usuario}
+
+\label{subsec:host_usuario_diseno}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{fig/structurizr-host.png}
+    \caption{Diagrama de contenedor c4 que hace foco entre la interacción entre el usuario final, y los sistemas internos que deben estar instalados en el host del usuario para poder conectarse con Bastion}
+    \label{fig:container-host}
+\end{figure}
+
+El \textit{host de usuario} es el punto de origen de todas las conexiones SSH dentro del flujo de autenticación propuesto. Como se muestra en la Figura \ref{fig:container-host}, este host concentra los elementos de software que habilitan la generación, custodia y uso seguro del par de claves sin exponer la clave privada al exterior. A efectos de diseño, se identifican cuatro contenedores lógicos:
+
+\begin{enumerate}
+    \item \textbf{\textit{ssh\_client}}: ejecutable de OpenSSH que inicia la sesión, negocia algoritmos criptográficos y coordina el intercambio de credenciales con \textit{Bastion}.
+    \item \textbf{\textit{ssh\_agent}}: proceso residente que almacena manejadores de claves y firma desafíos en nombre del usuario, evitando que la clave privada abandone el contenedor \textit{soft\_hsm\_store}.
+    \item \textbf{\textit{pkcs11\_module}}: biblioteca dinámicamente cargable (\textit{libsofthsm2.so}) que expone la API PKCS\#11 y actúa de puente entre \textit{ssh\_agent} y el almacén de claves.
+    \item \textbf{\textit{soft\_hsm\_store}}: repositorio cifrado en disco que contiene el token SoftHSM y donde reside la clave privada del usuario en formato no exportable.
+\end{enumerate}
+
+
+
+\subsubsection{Flujo de autenticación}
+
+\begin{enumerate}
+    \item \textit{ssh\_agent} arranca en segundo plano y carga el \textit{pkcs11\_module}. El usuario ingresa el \textit{PIN} del token, que permanece en memoria volátil.
+    \item El usuario ejecuta \textcolor{orange}{ssh user@\textit{bastion}}. \textit{ssh\_client} detecta la presencia de \textit{ssh\_agent} y delega la firma de desafíos.
+    \item \textit{bastion} solicita credenciales mediante el mecanismo \textit{keyboard-interactive}. El cliente traduce esta solicitud en un pedido de firma al \textit{pkcs11\_module}, que responde con la firma generada dentro de \textit{soft\_hsm\_store}.
+    \item Una vez autenticado en \textit{bastion}, el usuario invoca un segundo canal SSH para saltar a \textit{servidor\_destino\_1}. El flujo se repite: \textit{servidor\_destino\_1} verifica la firma y, de ser válida, concede acceso.
+\end{enumerate}
+
+\subsubsection{Decisiones de diseño relevantes}
+\begin{itemize}
+    \item \textbf{Almacenamiento protegido}: al utilizar SoftHSM, la clave privada nunca se serializa en texto claro ni se expone fuera del token, mitigando riesgos de exfiltración local.
+    \item \textbf{Delegación mediante \textit{ssh\_agent}}: centralizar la operación de firma en un único proceso minimiza la superficie de ataque y permite la revocación inmediata de claves descargando el agente.
+    \item \textbf{Autenticación interactiva}: el uso de \texttt{keyboard-interactive} asegura que la verificación del \emph{PIN} se realice en tiempo de conexión, evitando que claves inactivas permanezcan indefinidamente desbloqueadas.
+    \item \textbf{Compatibilidad}: la adopción de la interfaz PKCS\#11 simplifica una futura migración a un HSM físico, ya que \textit{ssh\_client} y \textit{ssh\_agent} permanecerían inalterados.
+\end{itemize}
+
+En conjunto, la arquitectura del \textit{host de usuario} garantiza que la autenticación repose sobre un almacén criptográfico robusto y sobre protocolos interactivos que limitan la exposición de secretos, alineándose con los principios de mínima superficie de ataque y defensa en profundidad.
+
+\subsection{Emisión de certificados}
+\label{subsec:emision_certificados}
+
+La provisión de un certificado X.509 para cada \emph{técnico} constituye el punto de partida del control de acceso propuesto en este trabajo. El proceso adoptado se muestra en la Figura \ref{fig:emision_certificados_simplificado} y se apoya exclusivamente en dos actores: el \textbf{técnico} —titular del certificado— y el \textbf{oficial de registro} —operador de la RA.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/emision_certificados_simplificado.png}
+    \caption{Flujo de emisión de certificado para un nuevo técnico}
+    \label{fig:emision_certificados_simplificado}
+\end{figure}
+
+\paragraph{1. Solicitud y validación.}
+El \emph{técnico} solicita el alta ante el \emph{oficial de registro}, quien verifica que la petición se ajuste a la política la organización. Por ejemplo, una política organizacional podría ser que solamente los empleados con más de 3 meses de antigüedad puedan acceder a los servidores. 
+En caso de que sea válida la solicitud, se propone en este trabajo que se le envíe una guía al técnico (en la figura \ref{fig:emision_certificados_simplificado} llamada \emph{user\_enrollment\_guide.pdf}) que contenga el instructivo de cómo hacer una solicitud de certificado usando un archivo CSR.  
+
+\paragraph{2. Generación local de claves y CSR.}
+En el \emph{host\_técnico}, el usuario inicializa el token SoftHSM, genera un par de claves inexportable y produce la CSR (\texttt{user.csr}) empleando los parámetros definidos en \texttt{csr.conf}. La confidencialidad de la clave privada queda así garantizada desde el origen.
+
+\paragraph{3. Inscripción de la CSR y emisión del certificado.}
+El \emph{técnico} transfiere la CSR al \emph{oficial de registro}, quien la examina (nombres distinguidos, extensiones y plantilla) y la inscribe en \textit{EJBCA RA Web}. La CA responde con el \texttt{certificate\_serial\_number} y el certificado firmado.
+
+\paragraph{4. Despliegue en el host.}
+El \emph{técnico} descarga el certificado, lo asocia a su \texttt{key\_id} en la configuración de \textit{ssh-agent} y verifica la correspondencia mediante el número de serie. A partir de este instante, toda autenticación hacia \textit{bastion} se realiza exclusivamente con la clave residente en SoftHSM.
+
+\paragraph{5. Consideraciones de diseño.}
+\begin{itemize}
+    \item \emph{Mínima superficie de ataque}: la clave privada no abandona el token en ningún momento.  
+    \item \emph{Trazabilidad}: la RA registra la emisión y vincula el número de serie con el técnico para futuras revocaciones.  
+\end{itemize}
+
+
+
+
+

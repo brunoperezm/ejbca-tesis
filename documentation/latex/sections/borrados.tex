@@ -1,0 +1,47 @@
+\section{Modelo C4 y herramientas de diagramación}
+\label{sec:diag_c4}
+
+En este trabajo la arquitectura del sistema se documenta mediante el \emph{modelo C4}, una propuesta de Simon Brown que introduce claridad al describir software en distintos niveles de abstracción: \emph{Context}, \emph{Container}, \emph{Component} y \emph{Code}\cite{brown_c4_model}.  
+
+\subsection{Ventajas del modelo C4}
+
+En contraste con UML, C4 utiliza un conjunto limitado de conceptos (persona, sistema, contenedor y componente) que simplifica la comunicación con públicos técnicos y no técnicos, reduce la curva de aprendizaje y evita la proliferación de diagramas poco mantenibles. Estas características lo convierten en una herramienta idónea para sesiones de diseño colaborativo, incorporación de nuevos integrantes y actividades de \emph{threat modelling}\cite{brown_c4_model}.
+
+\subsection{Diagrama como código: Structurizr DSL}
+
+Para materializar las vistas C4 se empleó \textbf{Structurizr DSL}, un lenguaje declarativo que describe modelo, vistas y estilos en texto plano\cite{structurizr_dsl}. Esta aproximación \emph{diagram-as-code} facilita:
+
+\begin{itemize}
+    \item control de versiones y revisión de cambios en el mismo flujo que el código fuente,
+    \item generación reproducible de diagramas en \emph{pipelines} CI/CD,
+    \item automatización de revisiones de arquitectura.
+\end{itemize}
+
+Los archivos \texttt{workspace.dsl} incluidos en el repositorio pueden renderizarse localmente con \textit{Structurizr CLI} o mediante \textit{Structurizr Lite}\cite{structurizr_lite}, garantizando consistencia entre documentación y estado real del sistema.
+
+\subsection{Emisión de Certificados}
+
+Una vez todo el sistema estuviera implementado, en el día a día, para que un trabajador nuevo, o uno que se le hubiera revocado su certificado, cualquiera sea la razón, pueda ingresar a un servidor, el primer paso será el de emitirle un certificado nuevo.
+
+Este paso es probablemente el que más se puede ver influenciado por la política interna que se decida implementar, la propuesta nuestra se puede observar en la figura \ref{fig:emision_certificados} en el caso de un usuario nuevo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fig/emision_certificados.png}
+    \caption{Emisión certificados para usuario nuevo}
+    \label{fig:emision_certificados}
+\end{figure}
+
+En el diagrama \ref{fig:emision_certificados} aparece un miembro nuevo, no mencionado anteriormente, identificado como \textit{Coordinador}, rol que tendrá un miembro con la posición para supervisar y organizar el trabajo, por lo que tendrá conocimiento de los trabajadores, y si deben tener acceso o no a un servidor para realizar que tarea. 
+
+El Coordinador le solicitara a la persona encargada de la tarea de Oficial de Registro, encargada de la AR (incluso pueden ser la misma persona), que le de un certificado al usuario nuevo, y en este caso, el Oficial de Registro le dará al usuario un instructivo con los pasos a realizar en su equipo.
+
+Dichos pasos consisten en generar un cert.csr, habiendo completado un csr.conf con su información personal, y firmado el mismo con un par de claves generado dentro de un SoftHSM, indicado en el instructivo todos los pasos necesarios para llegar a dicho fin.
+
+Una vez generado el csr.conf, se lo entrega al Oficial de Registro, quien tras examinar la validez del mismo y de su información, lo da de alta en el EJBCA, y genera un certificado, que le es entregado al usuario, e informado al Coordinador de que la tarea fue completado.
+
+En este esquema, se asume que el usuario nuevo sera capaz de seguir los pasos indicados en el instructivo, y no se toma en cuenta los pasos siguientes que deberá tomar para poder usar el certificado para autenticarse contra un servidor. 
+
+Aquí es donde surgen muchas variantes para la propuesta, tales como entregarle al usuario programas que realicen las tareas necesarias en su equipo para las diferentes etapas, o que deba llevar su equipo con el Oficial de Registro o el Coordinador, para que sean ellos quienes operen sobre su equipo para dejarlo en condiciones.
+
+
