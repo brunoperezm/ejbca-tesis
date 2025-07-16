@@ -19,8 +19,8 @@ def authenticate(serial_id, username):
             keyfile='client.key'    # Ruta a la llave privada del cliente
         )
         
-        # Verificación del certificado del servidor (opcional, pero recomendado)
-        #ctx.load_verify_locations('/etc/pam_python/ca.crt')  # Ruta al certificado CA
+        # Verificación del certificado del servidor 
+        ctx.load_verify_locations('/etc/pam_python/ca.crt')  # Ruta al certificado CA
         
         # Crear solicitud HTTPS
         request = urllib2.Request(url)

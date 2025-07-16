@@ -121,6 +121,7 @@
                 <br>
                 <button class="export-btn" id="exportBtn" onclick="exportToPNG()">Export to PNG</button>
                 <button class="export-btn" onclick="showSource()">Show Source</button>
+                <button class="refresh-btn" onclick="loadDiagramList()">🔄 Recargar</button>
             </div>
             <textarea class="plantuml-content" id="plantUMLContent" placeholder="PlantUML content will appear here..."></textarea>
         </div>
@@ -345,6 +346,9 @@ end note
         const messages = document.getElementById('messages');
 
         async function loadDiagramList() {
+            // Store current selection
+            const previousSelection = selectedFile;
+            
             fileList.innerHTML = '<div class="loading">Loading diagrams...</div>';
             
             // Load diagrams from server
@@ -368,8 +372,26 @@ end note
                 fileItem.className = 'file-item';
                 fileItem.textContent = fileName.replace('.plantuml', '');
                 fileItem.onclick = () => selectAndRenderDiagram(fileName);
+                
+                // Restore previous selection if it still exists
+                if (fileName === previousSelection) {
+                    fileItem.classList.add('selected');
+                }
+                
                 fileList.appendChild(fileItem);
             });
+            
+            // If there was a previous selection and it still exists, reload its content
+            if (previousSelection && diagramFiles[previousSelection]) {
+                selectedFile = previousSelection;
+                currentDiagramContent = diagramFiles[previousSelection];
+                
+                // Re-render the diagram with updated content
+                if (diagramContainer.style.display !== 'none') {
+                    renderDiagram();
+                    showMessage('Diagram refreshed with latest content', 'success');
+                }
+            }
         }
 
         function selectAndRenderDiagram(fileName) {

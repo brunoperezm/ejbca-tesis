@@ -1,0 +1,69 @@
+@startuml
+!theme mars
+title Flujo de autenticación completo del módulo PAM
+
+actor Usuario
+participant "SSH Client" as SSH
+participant "OpenSSH Server" as SSHD
+participant "PAM Module" as PAM
+participant "Authorized Keys File" as AuthKeys
+participant "Auth Service" as AuthSvc
+
+
+== Proceso de Autenticación ==
+Usuario -> SSH: ssh user@servidor
+SSH -> SSHD: Solicitud conexión SSH
+SSHD -> PAM: pam_sm_authenticate()
+activate PAM
+PAM -> Usuario: "Ingrese serial del certificado:"
+...demora del usuario en tipear en el orden de los varios segundos...
+Usuario --> PAM: serial_id
+PAM -> PAM: pamh.get_user()
+PAM -> AuthSvc: GET /certificate/{serial_id}/validate?username={user}
+activate AuthSvc
+AuthSvc --> PAM: {"allowed": true|false, "authorized_keys_entry": "ssh-rsa..."}
+deactivate AuthSvc
+alt Certificado autorizado (allowed = true)
+    PAM -> AuthKeys: Escribir entrada SSH
+    activate AuthKeys
+    AuthKeys --> PAM: Confirmación escritura
+    deactivate AuthKeys
+    PAM --> SSHD: PAM_SUCCESS
+    SSHD -> AuthKeys: Verificar clave pública
+    activate AuthKeys
+    AuthKeys --> SSHD: Clave encontrada
+    deactivate AuthKeys
+    SSHD -> SSH: Envía desafío con clave pública
+    SSH --> SSHD: Resuelve desafío usando su clave privada
+    alt Desafío mal resuelto
+        note over SSHD, SSH: Este caso podría ser el de un usuario que \ningresa un serial_id que no le pertenece
+        SSHD --> SSH: Conexión rechazada
+        SSH --> Usuario: Acceso denegado por clave publica
+    end
+    SSHD --> SSH: Autenticación exitosa
+    SSH --> Usuario: Acceso concedido    
+else Certificado no autorizado/error (allowed = false o error)
+    PAM --> SSHD: PAM_AUTH_ERR
+    SSHD --> SSH: Conexión rechazada
+    SSH --> Usuario: Acceso denegado
+end
+deactivate PAM
+== Cierre de Sesión ==
+Usuario -> SSH: exit / cierre conexión
+SSH -> SSHD: Terminar sesión SSH
+SSHD -> PAM: pam_sm_close_session()
+activate PAM
+PAM -> AuthKeys: Remover entrada
+activate AuthKeys
+AuthKeys --> PAM
+deactivate AuthKeys
+PAM --> SSHD: PAM_SUCCESS
+deactivate PAM
+SSHD --> SSH: Conexión cerrada
+SSH --> Usuario: Cierre de conexión
+
+deactivate PAM
+deactivate AuthKeys
+deactivate AuthSvc
+
+@enduml
