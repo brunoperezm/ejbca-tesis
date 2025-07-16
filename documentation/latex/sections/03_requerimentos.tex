@@ -1,45 +1,44 @@
 \chapter{Requerimientos}\label{cap:requerimientos}
 
-
 \section{Objetivos}
 
 \subsection{Objetivos Generales}
 
-Implementar un control de acceso a servidores haciendo uso de la PSI como modelo, que incluya autenticación, con una infraestructura de clave pública y herramientas open source.
+Implementar un control de acceso a servidores haciendo uso de la PSI como modelo, que incluya autenticación, con una infraestructura de clave pública y herramientas \textit{open source}.
 
-\section{Actores en el sistema} % Son los stakeholders en gral. Quizas tenemos que hablar de que ellos nos van a requerir un control de acceso.
-% Tecnico ingeniero que se contrata para hacer tarea en servidores
-% Oficial de registro. Otorga mediante alguna politica de seguridad cert digital al técnico
+\section{Actores en el sistema} % Son los stakeholders en gral. Quizás tenemos que hablar de que ellos nos van a requerir un control de acceso.
+% Técnico ingeniero que se contrata para hacer tarea en servidores
+% Oficial de registro. Otorga mediante alguna política de seguridad cert digital al técnico
 % Administrador (?)
 
-En una organización que cuenta con múltiples servidores a los que ingresar de manera remota, se pueden identificar de manera general, por lo menos a tres tipos de participantes del proceso total.
+En una organización que cuenta con múltiples servidores a los que se ingresa de manera remota, se pueden identificar, de manera general, al menos tres tipos de participantes en el proceso. % revisar
 
 \subsection{Técnicos}
 
-Al hablar de técnicos, o ingenieros, nos referimos a todos aquellos que requieren ingresar por un motivo u otro, a un servidor, o a un grupo de servidores en particular.
+Al hablar de técnicos, o ingenieros, nos referimos a todos aquellos que requieren ingresar, por uno u otro motivo, a un servidor o a un grupo de servidores en particular. % revisar
 
-Los mismos pueden ser parte de la organización, o un tercero contratado por la parte interesada del servicio que ofrece un servidor, donde su conocimiento sobre la infraestructura general se limita a lo mínimo indispensable, al que se le debe instruir de manera especifica como ingresar a donde requiere y nada más.
+Estos pueden formar parte de la organización o ser terceros contratados por la parte interesada del servicio que ofrece un servidor, y su conocimiento sobre la infraestructura general se limita a lo mínimo indispensable; por lo tanto, se los debe instruir de manera específica sobre cómo ingresar únicamente donde requieren y nada más. % revisar
 
 \subsection{Administradores}
 
-Los administradores serán aquellos que forman parte de la organización hace más tiempo, y por su posición en la misma, cuentan con un mayor nivel de confianza, y por su rol cuentan con más privilegios que aquellos mencionados dentro de los técnicos. A los mismos nos interesa ahora diferenciarlos de dos formas.
+Los administradores serán aquellos que forman parte de la organización desde hace más tiempo y, por su posición en la misma, cuentan con un mayor nivel de confianza; además, por su rol, disponen de más privilegios que los técnicos mencionados anteriormente. Ahora interesa diferenciarlos de dos maneras. % revisar
 
 \subsubsection{Administrador de servidores}
 
-Los administradores de servidores, son aquellos que entre sus tareas se pueden encontrar el de mantenimiento, o el de reestructurar la red o infraestructura de todos los servidores en general, por lo tanto estos son quienes tendrán la posibilidad de acceder a todos los servidores, incluidos los más sensibles y críticos.
+Los administradores de servidores son aquellos cuyas tareas incluyen el mantenimiento o la reestructuración de la red o infraestructura de todos los servidores en general; por lo tanto, son quienes tendrán la posibilidad de acceder a todos los servidores, incluidos los más sensibles y críticos. % revisar
 
 \subsubsection{Oficial de registro}
 
-El oficial de registro es aquel que se encargara de las tareas relacionadas con la AR, ya sea la emisión o revocación de certificados, encargándose de la verificar que efectivamente se le esta emitiendo un certificado a quien lo requiere y debe tenerlo, así como la veracidad de la información allí contenida.
+El oficial de registro es quien se encargará de las tareas relacionadas con la AR, ya sea la emisión o la revocación de certificados, ocupándose de verificar que efectivamente se esté emitiendo un certificado a quien lo requiere y debe tenerlo, así como la veracidad de la información allí contenida. % revisar
 
-La ventaja de personificar al oficial de registro como una entidad separada del administrador de servidores, es que al usar EJBCA en este proyecto, se cuenta con una UI amigable, lo que nos permite asignar este rol también a un miembro de la organización que podría no estar relacionado con las actividades técnicas, y ser, por ejemplo, un miembro de RRHH de alto rango.
+La ventaja de personificar al oficial de registro como una entidad separada del administrador de servidores es que, al usar EJBCA en este proyecto, se cuenta con una \textit{UI} amigable, lo que permite asignar este rol también a un miembro de la organización que podría no estar relacionado con las actividades técnicas y ser, por ejemplo, un miembro de RR.~HH.\ de alto rango. % revisar
 
 \section{Características y Requerimientos del Sistema}
-% debe haber un capitulo sobre priorizacion de requerimientos -> seccion siguiente
-% en otro capitulo debe haber una evaluacion del cumplimiento de los requerimientos -> Presente en conclusion
-% deberia haber otra seccion sobre la planificacion y NO puede ir un gantt sino se debe informar como se fue llevando adelante. TODO en pasado, no en futuro. -> Misma seccion mencionada anteriormente
+% debe haber un capitulo sobre priorización de requerimientos -> sección siguiente
+% en otro capitulo debe haber una evaluación del cumplimiento de los requerimientos -> Presente en conclusión
+% debería haber otra sección sobre la planificación y NO puede ir un gantt sino se debe informar cómo se fue llevando adelante. TODO en pasado, no en futuro. -> Misma sección mencionada anteriormente
 
-Para mayor facilidad de seguimiento se emplea el siguiente formato de nombramiento de los requisitos: REQ\_F\_XXX\_Y para los requerimientos funcionales y REQ\_NF\_Y para los no funcionales. En donde \textit{XXX} es la abreviación de una funcionalidad del programa (ej. PKI) e \textit{Y} representa los diferentes requerimientos esa funcionalidad.
+Para mayor facilidad de seguimiento se emplea el siguiente formato de nombramiento de los requisitos: \texttt{REQ\_F\_XXX\_Y} para los requerimientos funcionales y \texttt{REQ\_NF\_Y} para los no funcionales. En donde \textit{XXX} es la abreviación de una funcionalidad del programa (ej.~PKI) e \textit{Y} representa los diferentes requerimientos de esa funcionalidad. % revisar
 
 \begin{table}[ht]
 \centering
@@ -47,28 +46,26 @@ Para mayor facilidad de seguimiento se emplea el siguiente formato de nombramien
 \hline
 \textbf{Acrónimo} & \textbf{Significado} \\
 \hline
-SYA & Seguridad Y Acceso \\
+SYA & Seguridad y Acceso \\
 IUS & Interacción de Usuario \\
 PKI & Infraestructura de Clave Pública \\
 INF & Infraestructura del sistema \\
 \hline
 \end{tabular}
-\caption{Acrónimos y sus Significados}
+\caption{Acrónimos y sus significados}
 \end{table}
 
 \subsection{Requerimientos Funcionales}
 
 \begin{itemize}
     \item REQ\_F\_SYA\_1: El acceso a un servidor no deberá permitir el ingreso a otros servidores.
-    \item REQ\_F\_SYA\_2: El ingreso al servidor de los técnicos no será con el usuario root.
+    \item REQ\_F\_SYA\_2: El ingreso al servidor de los técnicos no será con el usuario \textit{root}.
     \item REQ\_F\_SYA\_3: Las claves privadas no podrán ser trasladadas una vez creadas.
-    % Las claves privadas deberán generarse dentro de un HSM (hardware o software) y no podrán ser exportadas, copiadas ni trasladadas fuera del mismo, garantizando su permanencia en un entorno seguro.
-    \item REQ\_F\_SYA\_4: Ni los servidores, ni la AR deberán ni requerirán tener acceso a las claves privadas de los usuarios.
-    \item REQ\_F\_SYA\_5: Un usuario que intenta acceder a un servidor destino deberá hacerlo a través del servidor proxy Bastion.
-    \item REQ\_F\_SYA\_6: Los técnicos no deberán poder ganar acceso al servidor proxy Bastion.
+    \item REQ\_F\_SYA\_4: Ni los servidores ni la AR deberán ni requerirán tener acceso a las claves privadas de los usuarios. % revisar
+    \item REQ\_F\_SYA\_5: Un usuario que intenta acceder a un servidor destino deberá hacerlo a través del servidor \textit{proxy} Bastion.
+    \item REQ\_F\_SYA\_6: Los técnicos no deberán poder ganar acceso al servidor \textit{proxy} Bastion.
     \item REQ\_F\_SYA\_7: Una vez finalizada la sesión, el usuario deberá autenticarse nuevamente para acceder al sistema.
     \item REQ\_F\_SYA\_8: Los usuarios deberán tener en su posesión la clave privada con la que se firmó el CSR.
-    
 \end{itemize}
 
 \hspace{1cm}
@@ -77,7 +74,7 @@ INF & Infraestructura del sistema \\
     \item REQ\_F\_IUS\_1: El usuario no tendrá que editar archivos más allá de un listado con su información personal para la emisión del certificado.
     \item REQ\_F\_IUS\_2: El usuario deberá generar y almacenar su par de claves dentro de un HSM.
     \item REQ\_F\_IUS\_3: El usuario deberá proporcionar un identificador del certificado al intentar acceder a un servidor.
-    \item REQ\_F\_IUS\_4: Cuando un usuario intenta acceder a un servidor destino, debe ingresar la contraseña del usuario que utilizará en el servidor proxy Bastion.
+    \item REQ\_F\_IUS\_4: Cuando un usuario intenta acceder a un servidor destino, debe ingresar la contraseña del usuario que utilizará en el servidor \textit{proxy} Bastion.
     \item REQ\_F\_IUS\_5: Cuando un usuario intenta acceder a un servidor destino, debe ingresar la contraseña del usuario.
 \end{itemize}
 
@@ -93,183 +90,160 @@ INF & Infraestructura del sistema \\
 \hspace{1cm}
 
 \begin{itemize}
-    \item REQ\_F\_INF\_1: Si el sistema en su conjunto llegara a presentar una falla absoluta que impidiera el acceso mediante SSH a los servidores, debería existir una forma alternativa de ingresar a los mismos.
+    \item REQ\_F\_INF\_1: Si el sistema en su conjunto llegara a presentar una falla absoluta que impidiera el acceso mediante \textit{SSH} a los servidores, debería existir una forma alternativa de ingresar a los mismos.
     \item REQ\_F\_INF\_2: El sistema verificará la validez de los certificados digitales antes de permitir el acceso al servidor.
-    \item REQ\_F\_INF\_3: La emisión y/o revocación de un certificado, no deberá afectar a los servidores.
+    \item REQ\_F\_INF\_3: La emisión y/o revocación de un certificado no deberá afectar a los servidores.
     \item REQ\_F\_INF\_4: El sistema deberá generar y almacenar registros de las autenticaciones exitosas y fallidas.
-    
 \end{itemize}
 
 \subsection{Requerimientos No Funcionales}
 
 \begin{itemize}
-    \item REQ\_NF\_1: Una persona adulta con capacitación previa de 10 minutos máximo, debería ser capaz de entender como conectarse a un servidor una vez las configuraciones fueron hechas.
-    \item REQ\_NF\_2: Una persona adulta con capacitación previa de 1 hora máximo, debería ser capaz de entender como llevar a cabo las acciones de una AR.
-    \item REQ\_NF\_3: Tiempo de respuesta del sistema ante un intento de ingreso menores a los 3 segundos.
-    \item REQ\_NF\_4: Los servidores utilizados deberán tener SO Linux, en distribución Ubuntu de la versión 20.04 en adelante
-    \item REQ\_NF\_5: La forma de conectarse del usuario deberá ser compatible con un equipo con SO Linux, en distribución Ubuntu de la versión 16.04.07 en adelante.
-    \item REQ\_NF\_6: Las configuraciones a realizar en el equipo del usuario, deben poder ser hechas en un tiempo máximo de media hora.
-    \item REQ\_NF\_7: La solución deberá ser escalable de forma que quede asegurado su funcionamiento bajo la duplicación de servidores o usuarios.
-    \item REQ\_NF\_8: Todo el sistema del servidor debe ser replicable al seguir las instrucciones de este documento.
-    \item REQ\_NF\_9: El servidor deberá estar estar disponible de acuerdo al SLA con 99,9\% de disponibilidad.
-    \item REQ\_NF\_10: La solución de conexión a servidores deberá hacerse con uso exclusivo de herramientas Open Source sin recurrir a productos bajo licencia.
-    \item REQ\_NF\_11: Las configuraciones extra a ser realizadas en los servidores ya en producción no deberán ocupar más de 10MB de espacio de disco en el servidor proxy ni en el destino.
+    \item REQ\_NF\_1: Una persona adulta con capacitación previa de 10 minutos máximo debería ser capaz de entender cómo conectarse a un servidor una vez realizadas las configuraciones.
+    \item REQ\_NF\_2: Una persona adulta con capacitación previa de 1 hora máximo debería ser capaz de entender cómo llevar a cabo las acciones de una AR.
+    \item REQ\_NF\_3: Tiempo de respuesta del sistema ante un intento de ingreso menor a 3~segundos.
+    \item REQ\_NF\_4: Los servidores utilizados deberán tener SO Linux, distribución Ubuntu versión 20.04 en adelante.
+    \item REQ\_NF\_5: La forma de conectarse del usuario deberá ser compatible con un equipo con SO Linux, distribución Ubuntu versión 16.04.07 en adelante.
+    \item REQ\_NF\_6: Las configuraciones a realizar en el equipo del usuario deben poder completarse en un tiempo máximo de media hora.
+    \item REQ\_NF\_7: La solución deberá ser escalable de forma que quede asegurado su funcionamiento ante la duplicación de servidores o usuarios.
+    \item REQ\_NF\_8: Todo el sistema del servidor deberá ser replicable siguiendo las instrucciones de este documento. % revisar
+    \item REQ\_NF\_9: El servidor deberá estar disponible de acuerdo con el SLA, con 99,9\,\% de disponibilidad.
+    \item REQ\_NF\_10: La solución de conexión a servidores deberá hacerse con uso exclusivo de herramientas \textit{open source} sin recurrir a productos bajo licencia.
+    \item REQ\_NF\_11: Las configuraciones extra a ser realizadas en los servidores ya en producción no deberán ocupar más de 10~MB de espacio de disco ni en el servidor \textit{proxy} ni en el destino.
     \item REQ\_NF\_12: Los certificados digitales deben cumplir con los estándares de seguridad establecidos por la industria, como X.509.
     \item REQ\_NF\_13: El sistema debe ser capaz de manejar hasta 50 usuarios simultáneos autenticándose sin degradar significativamente el rendimiento del sistema.
     \item REQ\_NF\_14: Los certificados emitidos utilizarán cifrado RSA-2048.
-    \item REQ\_NF\_15: El par de claves generado utilizarán cifrado RSA-2048.
-    \item REQ\_NF\_16: La validez máxima de los certificados es de 2 años.
-    \item REQ\_NF\_17: La comunicación entre servidores y el servicio de autenticación deberá estar autenticada y encriptada
-    
+    \item REQ\_NF\_15: El par de claves generado utilizará cifrado RSA-2048.
+    \item REQ\_NF\_16: La validez máxima de los certificados es de 2~años.
+    \item REQ\_NF\_17: La comunicación entre servidores y el servicio de autenticación deberá estar autenticada y encriptada.
 \end{itemize}
 
-
 \section{Plan de Trabajo}
-% Planificacion de los requerimentos
+% Planificación de los requerimientos
 
-Para llevar a cabo la elaboración de este trabajo se elaboró un conjunto de iteraciones, con tareas a realizar y su respectivo criterio de finalización, de forma que algunos iteraciones han sido independientes entre sí, mientras otras fueron incrementales.
-
+Para llevar a cabo la elaboración de este trabajo se definió un conjunto de iteraciones con tareas a realizar y su respectivo criterio de finalización, de forma que algunas iteraciones fueron independientes entre sí, mientras que otras resultaron incrementales. % revisar
 
 \subsection{Iteración 1: Instalación y configuración del sistema del entorno productivo}
 
-En esta iteración, se busca generar el entorno de trabajo para el resto del proyecto. Para ello, se instala en un servidor físico el hipervisor VMware ESXi, y se lo configura para que cumpla con el esquema planteado en la topología de red. Una vez que se encuentra todo listo, se sigue con la creación de 3 maquinas virtuales, a los que se le instala Ubuntu Server 20.04.
+En esta iteración se generó el entorno de trabajo para el resto del proyecto. Para ello, se instaló en un servidor físico el hipervisor \textit{VMware ESXi} y se lo configuró para que cumpliera con el esquema planteado en la topología de red. Una vez que todo estuvo listo, se continuó con la creación de tres máquinas virtuales, a las que se les instaló \textit{Ubuntu Server}~20.04. % revisar
 
-En la Iteración 1 se implementan los requerimientos:
+En la Iteración~1 se implementan los requerimientos:
 
 \begin{itemize}
-    \item REQ\_F\_INF\_1: Si el sistema en su conjunto llegara a presentar una falla absoluta que impidiera el acceso mediante SSH a los servidores, debería existir una forma alternativa de ingresar a los mismos.
-    \item REQ\_F\_INF\_4: El sistema deberá generar y almacenar registros de las autenticaciones exitosas y fallidas.
-    \item REQ\_NF\_3: Tiempo de respuesta del sistema ante un intento de ingreso menores a los 3 segundos.
-    \item REQ\_NF\_4: Los servidores utilizados deberán tener SO Linux, en distribución Ubuntu de la versión 20.04 en adelante.
-    \item REQ\_NF\_9: El servidor deberá estar estar disponible de acuerdo al SLA con 99,9\% de disponibilidad.
-    \item REQ\_NF\_13: El sistema debe ser capaz de manejar hasta 50 usuarios simultáneos autenticándose sin degradar significativamente el rendimiento del sistema.
+    \item REQ\_F\_INF\_1
+    \item REQ\_F\_INF\_4
+    \item REQ\_NF\_3
+    \item REQ\_NF\_4
+    \item REQ\_NF\_9
+    \item REQ\_NF\_13
 \end{itemize}
 
-
-%\begin{longtable}{|c|l|l|}
-%\hline
-%\textbf{Tarea} & \textbf{Descripción} & \textbf{Criterio de aceptación} \\
-%\hline
-%\endfirsthead
-%\hline
-%\endfoot
-%\hline
-%asda & asdad & asdad  \\
-%\hline
-%abasd & asdsda & asdad \\
-%\hline
-%asdad & asdsasd & asdad \\
-%\hline
-%asdad & asdasd & asdad \\
-%\hline
-%\end{longtable}
-
 \subsection{Iteración 2: Instalación y configuración EJBCA}
-En esta iteración se busca tener un servidor con una instancia en Docker de EJBCA Community. La solución utilizada debe ser persistente, es decir que si las instancias de docker se apagan y se reinician el estado del sistema debe mantenerse.
 
-Posteriormente, se configuran los servicios de PKI a utilizar, y se hace el ejercicio de emitir certificados.
- 
+En esta iteración se configuró un servidor con una instancia en \textit{Docker} de EJBCA Community. La solución utilizada es persistente; es decir, si las instancias de \textit{Docker} se apagan y se reinician, el estado del sistema se mantiene.
+
+Posteriormente, se configuraron los servicios de PKI a utilizar y se realizó el ejercicio de emitir certificados.
+
 \begin{itemize}
-    \item REQ\_F\_SYA\_3: Las claves privadas no podrán ser trasladadas una vez creadas.
-    \item REQ\_F\_SYA\_4: Ni los servidores, ni la AR deberán ni requerirán tener acceso a las claves privadas de los usuarios.
-    \item REQ\_F\_SYA\_8: Los usuarios deberán tener en su posesión la clave privada con la que se firmó el CSR.
-    \item REQ\_F\_IUS\_1: El usuario no tendrá que editar archivos más allá de un listado con su información personal para la emisión del certificado.
-    \item REQ\_F\_IUS\_2: El usuario deberá generar y almacenar su par de claves dentro de un HSM.
-    \item REQ\_F\_PKI\_1: Los certificados digitales deberán ser emitidos y gestionados por una CA preconfigurada en el sistema.
-    \item REQ\_F\_PKI\_2: Se tendrá que poder verificar la validez de los certificados digitales emitidos.
-    \item REQ\_F\_PKI\_3: El sistema deberá permitir la revocación de certificados digitales a través de una interfaz de gestión.
-    \item REQ\_F\_PKI\_4: Las claves privadas deberán estar almacenadas en un HSM.
-    \item REQ\_NF\_2: Una persona adulta con capacitación previa de 1 hora máximo, debería ser capaz de entender como llevar a cabo las acciones de una AR.
-    \item REQ\_NF\_9: El servidor deberá estar estar disponible de acuerdo al SLA con 99,9\% de disponibilidad.
-    \item REQ\_NF\_10: La solución de conexión a servidores deberá hacerse con uso exclusivo de herramientas Open Source sin recurrir a productos bajo licencia.
-    \item REQ\_NF\_12: Los certificados digitales deben cumplir con los estándares de seguridad establecidos por la industria, como X.509.
-    \item REQ\_NF\_14: Los certificados emitidos utilizarán cifrado RSA-2048.
-    \item REQ\_NF\_15: El par de claves generado utilizarán cifrado RSA-2048.
-    \item REQ\_NF\_16: La validez máxima de los certificados es de 2 años.
+    \item REQ\_F\_SYA\_3
+    \item REQ\_F\_SYA\_4
+    \item REQ\_F\_SYA\_8
+    \item REQ\_F\_IUS\_1
+    \item REQ\_F\_IUS\_2
+    \item REQ\_F\_PKI\_1
+    \item REQ\_F\_PKI\_2
+    \item REQ\_F\_PKI\_3
+    \item REQ\_F\_PKI\_4
+    \item REQ\_NF\_2
+    \item REQ\_NF\_9
+    \item REQ\_NF\_10
+    \item REQ\_NF\_12
+    \item REQ\_NF\_14
+    \item REQ\_NF\_15
+    \item REQ\_NF\_16
 \end{itemize}
 
 \subsection{Iteración 3: Configuración autenticación con herramientas OpenSSH}
 
-Esta iteración tiene el objetivo de investigar como funcionan las herramientas que ofrece OpenSSH para la autenticación de usuarios a un servidor haciendo uso del protocolo SSH, para entender de mejor manera la interacción con el usuario, y los limites que impone la tecnología hacia la solución buscada.
+Esta iteración tuvo como objetivo investigar cómo funcionan las herramientas que ofrece \textit{OpenSSH} para la autenticación de usuarios a un servidor mediante el protocolo \textit{SSH}, con el fin de entender mejor la interacción con el usuario y los límites que impone la tecnología a la solución buscada.
 
-Dado que esta iteración esta centrada en investigación, no se centra en el cumplimiento de requerimientos, sin embargo toca el núcleo de OpenSSH, cumpliendo con tres de ellos:
+Dado que esta iteración estuvo centrada en investigación, no se enfocó en el cumplimiento de requerimientos; sin embargo, tocó el núcleo de \textit{OpenSSH}, cumpliendo con tres de ellos:
 
 \begin{itemize}
-    \item REQ\_F\_SYA\_5: Un usuario que intenta acceder a un servidor destino deberá hacerlo a través del servidor proxy Bastion.
-    \item REQ\_F\_SYA\_6: Los técnicos no deberán poder ganar acceso al servidor proxy Bastion.
-    \item REQ\_F\_INF\_4: El sistema deberá generar y almacenar registros de las autenticaciones exitosas y fallidas.
+    \item REQ\_F\_SYA\_5
+    \item REQ\_F\_SYA\_6
+    \item REQ\_F\_INF\_4
 \end{itemize}
 
 \subsection{Iteración 4: Configuración entorno de desarrollo}
-Esta iteración tiene como objetivo tener un entorno de desarrollo en una sola máquina física que permita poder desarrollar el proyecto sin tener que estar haciendo accesos y deploys constantes en el entorno productivo.
-Hacer un entorno de desarrollo tiene dos ventajas. En primer lugar permite que los 2 integrantes del proyecto puedan avanzar con las iteraciones siguientes sin bloquearse o sobre-escribir el ambiente de producción con pruebas y/o código a medio hacer. Y, en segundo lugar, acelera los tiempos de desarrollo porque es más fácil hacer debugging y revertir cambios o modificaciones incorrectas.
 
-Se considera terminada la etapa si en una sola máquina local se puede tener un cliente con ssh y un servidor con openssh.
+Esta iteración tuvo como objetivo disponer de un entorno de desarrollo en una sola máquina física que permitiera avanzar sin realizar accesos ni \textit{deploys} constantes en el entorno productivo. Crear este entorno presenta dos ventajas: permite que los dos integrantes del proyecto puedan avanzar sin bloquearse ni sobrescribir el ambiente de producción con pruebas o código a medio hacer y acelera los tiempos de desarrollo, porque es más sencillo depurar y revertir cambios incorrectos.
 
-\subsection{Iteración 5: Configuración básica del modulo PAM}
+Se consideró terminada la etapa cuando en una sola máquina local se pudo disponer de un cliente con \textit{ssh} y un servidor con \textit{OpenSSH}. % revisar
 
-Esta iteración tiene como objetivo familiarizarse con el modulo PAM.
-Se estudiará que partes lo componen y como es su funcionamiento.
-Se busca mantener un solo lenguaje de programación, así que en lugar de su forma por defecto, se usara con el lenguaje Python, y se harán unas configuraciones básicas para confirmar que es útil en la función de modificar el comportamiento estándar de autenticación vía SSH.
+\subsection{Iteración 5: Configuración básica del módulo PAM}
 
-En la iteración se podrá trabajar sobre los siguientes requerimientos:
+Esta iteración tuvo como objetivo familiarizarse con el módulo \textit{PAM}. Se estudió qué partes lo componen y cómo funciona. Con el fin de mantener un solo lenguaje de programación, se utilizó Python en lugar de la implementación por defecto y se realizaron configuraciones básicas para confirmar su utilidad en la modificación del comportamiento estándar de autenticación vía \textit{SSH}. % revisar
+
+En la iteración se trabajó sobre los siguientes requerimientos:
 
 \begin{itemize}
-    \item REQ\_F\_SYA\_7: Una vez finalizada la sesión, el usuario deberá autenticarse nuevamente para acceder al sistema.
-    \item REQ\_F\_IUS\_4: Cuando un usuario intenta acceder a un servidor destino, debe ingresar la contraseña del usuario que utilizará en el servidor proxy Bastion.
-    \item REQ\_F\_IUS\_5: Cuando un usuario intenta acceder a un servidor destino, debe ingresar la contraseña del usuario.
-    \item REQ\_F\_INF 1: Si el sistema en su conjunto llegara a presentar una falla absoluta que impidiera el acceso mediante SSH a los servidores, debería existir una forma alternativa de ingresar a los mismos.
+    \item REQ\_F\_SYA\_7
+    \item REQ\_F\_IUS\_4
+    \item REQ\_F\_IUS\_5
+    \item REQ\_F\_INF\_1 % revisar
 \end{itemize}
 
 \subsection{Iteración 6: Configuración servicio de obtención de claves}
-En esta etapa, el objetivo es crear, configurar, y desarrollar un servicio que permita, de manera centralizada, buscar certificados, tener lógica para saber si están revocados, si son válidos y si el usuario tiene permiso de acceso al sistema.
-Para hacer esta iteración se utilizará el framework FastApi y el servicio estará escrito en python. El mismo expone un endpoint REST que recibe el identificador del certificado (número de serie) provisto por el usuario cuando inicia la conexión SSH.  
-El servicio consulta la EJBCA REST API, descarga el certificado, verifica su estado (vigencia, no revocado y dentro del período de validez) y extrae la clave pública, convirtiéndola al formato OpenSSH.   
-Cada operación se deja registrada en un log centralizado para su posterior auditoría.
 
-En la Iteración 6 se abordan los siguientes requisitos:
+En esta etapa se creó, configuró y desarrolló un servicio que permite, de manera centralizada, buscar certificados y determinar si están revocados, si son válidos y si el usuario tiene permiso de acceso al sistema. Para ello se utilizó el \textit{framework} \textit{FastAPI} y el servicio fue escrito en Python. El mismo expone un \textit{endpoint} \textit{REST} que recibe el identificador del certificado (número de serie) provisto por el usuario cuando inicia la conexión \textit{SSH}. % revisar
+
+El servicio consulta la EJBCA \textit{REST API}, descarga el certificado, verifica su estado (vigencia, no revocado y dentro del período de validez) y extrae la clave pública, convirtiéndola al formato \textit{OpenSSH}. Cada operación se registra en un log centralizado para su posterior auditoría.
+
+En la Iteración~6 se abordaron los siguientes requisitos:
 
 \begin{itemize}
-    \item REQ\_F\_IUS\_3: El usuario deberá proporcionar un identificador del certificado al intentar acceder a un servidor.
-    \item REQ\_F\_INF\_2: El sistema verificará la validez de los certificados digitales antes de permitir el acceso al servidor.
-    \item REQ\_F\_INF\_4: El sistema deberá generar y almacenar registros de las autenticaciones exitosas y fallidas.
-    \item REQ\_F\_SYA\_4: Ni los servidores ni la AR deberán ni requerirán tener acceso a las claves privadas de los usuarios.
+    \item REQ\_F\_IUS\_3
+    \item REQ\_F\_INF\_2
+    \item REQ\_F\_INF\_4
+    \item REQ\_F\_SYA\_4
 \end{itemize}
-Se considera terminada la iteración cuando ya se tiene un endpoint REST que con el número de serie del certificado responde información sobre si está expirado, su clave pública y si tiene acceso o no al sistema.
+
+Se consideró terminada la iteración cuando ya se disponía de un \textit{endpoint REST} que, con el número de serie del certificado, respondía información sobre si este estaba expirado, su clave pública y si contaba o no con acceso al sistema.
 
 \subsection{Iteración 7: Actualizar módulo PAM usando servicio}
 
-El propósito de esta iteración es lograr la integración entre el módulo PAM de los servidores destino y el servicio de autenticación desarrollado en la etapa anterior.
-De esta manera cuando un usuario se intente autenticar usando ssh contra un servidor destino, el módulo PAM instalado en el destino va a, de manera transparente a ssh, autenticarse usando el endpoint definido en la etapa anterior.
-Luego de que se verifique que es válido el certificado, antes de dar por válida la autenticación vía módulo PAM va a insertar en el archivo \texttt{authorized\_keys} la entrada recibida por el servicio.
+El propósito de esta iteración fue lograr la integración entre el módulo \textit{PAM} de los servidores destino y el servicio de autenticación desarrollado en la etapa anterior. De esta manera, cuando un usuario intentara autenticarse mediante \textit{ssh} contra un servidor destino, el módulo \textit{PAM} instalado en el destino, de manera transparente para \textit{ssh}, se autenticaba usando el \textit{endpoint} definido en la etapa anterior.
 
+Luego de que se verificara la validez del certificado, y antes de dar por válida la autenticación, el módulo \textit{PAM} insertaba en el archivo \texttt{authorized\_keys} la entrada recibida por el servicio.
 
-Al finalizar la sesión SSH, el mismo módulo PAM se encarga de limpiar la entrada temporal del archivo \texttt{authorized\_keys}, garantizando que cada intento de acceso futuro requiera pasar nuevamente por el proceso completo de validación de certificado.
+Al finalizar la sesión \textit{SSH}, el mismo módulo \textit{PAM} se encargaba de limpiar la entrada temporal del archivo \texttt{authorized\_keys}, garantizando que cada intento de acceso futuro requiriera pasar nuevamente por el proceso completo de validación de certificado.
 
-En la Iteración 7 se abordan los siguientes requisitos:
+En la Iteración~7 se abordaron los siguientes requisitos:
 \begin{itemize}
-    \item REQ\_F\_IUS\_3: El usuario deberá proporcionar un identificador del certificado al intentar acceder a un servidor.
-    \item REQ\_F\_INF\_2: El sistema verificará la validez de los certificados digitales antes de permitir el acceso al servidor.
-    \item REQ\_F\_SYA\_7: Una vez finalizada la sesión, el usuario deberá autenticarse nuevamente para acceder al sistema.
-    \item REQ\_NF\_3: Tiempo de respuesta del sistema ante un intento de ingreso menores a los 3 segundos.
+    \item REQ\_F\_IUS\_3
+    \item REQ\_F\_INF\_2
+    \item REQ\_F\_SYA\_7
+    \item REQ\_NF\_3
 \end{itemize}
 
-Se considera completada la iteración cuando un usuario puede conectarse exitosamente a un servidor destino proporcionando únicamente el número de serie de su certificado X.509, sin necesidad de configuración manual previa de claves públicas en el servidor de destino.
+Se consideró completada la iteración cuando un usuario podía conectarse exitosamente a un servidor destino proporcionando únicamente el número de serie de su certificado X.509, sin necesidad de configurar manualmente claves públicas en el servidor destino.
 
 \subsection{Iteración 8: Incluir mTLS como forma de autenticación mutua entre servicio de autenticación y servidores}
 
-Esta iteración tiene como objetivo implementar autenticación mutua mediante mTLS (Mutual TLS) entre los servidores (Bastion y destinos) y el servicio de autenticación, asegurando que únicamente servidores autorizados puedan realizar consultas de validación de certificados.
+Esta iteración tuvo como objetivo implementar autenticación mutua mediante mTLS (Mutual TLS) entre los servidores (Bastion y destinos) y el servicio de autenticación, asegurando que únicamente servidores autorizados pudieran realizar consultas de validación de certificados.
 
-La implementación de mTLS resuelve una vulnerabilidad del sistema: sin autenticación mutua, cualquier cliente con acceso de red al servicio de autenticación podría realizar consultas de validación, potencialmente comprometiendo la seguridad del sistema. Con mTLS, tanto el cliente (servidor consultante) como el servidor (servicio de autenticación) deben presentar certificados válidos emitidos por la misma autoridad de certificación, estableciendo un canal de comunicación autenticado y cifrado.
+La implementación de mTLS resolvió una vulnerabilidad del sistema: sin autenticación mutua, cualquier cliente con acceso de red al servicio de autenticación podría realizar consultas de validación, potencialmente comprometiendo la seguridad del sistema. Con mTLS, tanto el cliente (servidor consultante) como el servidor (servicio de autenticación) deben presentar certificados válidos emitidos por la misma autoridad de certificación, estableciendo un canal de comunicación autenticado y cifrado.
 
-Para implementar esta funcionalidad se configura un proxy inverso con Nginx que actúa como terminador TLS, verificando los certificados cliente antes de reenviar las solicitudes al servicio de autenticación. Esta arquitectura permite centralizar la validación de certificados cliente y simplifica la configuración del servicio FastAPI.
+Para implementar esta funcionalidad se configuró un \textit{proxy} inverso con Nginx que actúa como terminador TLS, verificando los certificados cliente antes de reenviar las solicitudes al servicio de autenticación. Esta arquitectura permite centralizar la validación de certificados cliente y simplifica la configuración del servicio \textit{FastAPI}. % revisar
 
-En la Iteración 8 se abordan los siguientes requisitos:
+En la Iteración~8 se abordaron los siguientes requisitos:
 \begin{itemize}
-    \item REQ\_NF\_10: La solución de conexión a servidores deberá hacerse con uso exclusivo de herramientas Open Source sin recurrir a productos bajo licencia.
-    \item REQ\_NF\_11: Las configuraciones extra a ser realizadas en los servidores ya en producción no deberán ocupar más de 10MB de espacio de disco.
-    \item REQ\_NF\_17: La comunicación entre servidores y el servicio de autenticación deberá estar autenticada y encriptada
+    \item REQ\_NF\_10
+    \item REQ\_NF\_11
+    \item REQ\_NF\_17
 \end{itemize}
-Se considera completada la iteración cuando los servidores pueden autenticarse exitosamente contra el servicio de autenticación utilizando certificados X.509 emitidos por EJBCA, y cuando cualquier intento de conexión sin certificado válido es rechazado por el proxy Nginx. Adicionalmente, debe verificarse que la comunicación entre todos los componentes del sistema utilice cifrado TLS end-to-end.
+
+Se consideró completada la iteración cuando los servidores podían autenticarse exitosamente contra el servicio de autenticación utilizando certificados X.509 emitidos por EJBCA y cuando cualquier intento de conexión sin certificado válido era rechazado por el \textit{proxy} Nginx. Adicionalmente, se verificó que la comunicación entre todos los componentes del sistema utilizara cifrado TLS de extremo a extremo.
 
 \subsection{Iteración 9: Despliegue en entorno de producción}
