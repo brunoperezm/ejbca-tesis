@@ -15,11 +15,11 @@ Adicionalmente, en el laboratorio había un rack para instalar el servidor, con 
 
 \subsection{Desarrollo}
 
-Se descargó la imagen de VMware ESXi 6.7\cite{VMware_6.7_download} y se monto en un pendrive usando Rufus\cite{Rufus}. Se inició el servidor con el pendrive insertado, además de pantalla y teclado, y se forzó a usar el pendrive para bootear, consiguiendo acceder a la pantalla de instalación de VMware.
+Se descargó la imagen de \textit{VMware ESXi} 6.7\cite{VMware_6.7_download} y se montó en un pendrive usando \textit{Rufus}\cite{Rufus}. Se inició el servidor con el pendrive insertado, además de pantalla y teclado, y se forzó a usar el pendrive para bootear, consiguiendo acceder a la pantalla de instalación de \textit{VMware}. % revisar
 
-Para instalar, se siguieron procedimientos oficial\cite{VMware_6.7_install}, eligiendo el disco duro del servidor, borrando todo su contenido preexistente.
+Para instalar, se siguieron procedimientos oficiales\cite{VMware_6.7_install}, eligiendo el disco duro del servidor, borrando todo su contenido preexistente.
 
-Una vez que se reinicia y levanta con el nuevo SO, se le configura una IP privada provisional, para poder entrar vía web a la gestión del servidor. Para ello, nos dirigimos a: \texttt{F2 $\rightarrow{}$ Configure Managment Network $\rightarrow{}$ IPv4 Configuration}
+Una vez que se reinició y levantó con el nuevo SO, se le configuró una IP privada provisional, para poder entrar vía web a la gestión del servidor. Para ello, se accedió a: \texttt{F2 $\rightarrow{}$ Configure Management Network $\rightarrow{}$ IPv4 Configuration} % revisar
 
 \begin{figure}[H]
     \centering
@@ -28,7 +28,7 @@ Una vez que se reinicia y levanta con el nuevo SO, se le configura una IP privad
     \label{fig:Configuración IP privada para configuración inicial}
 \end{figure}
 
-Habiendo ya configurado una IP, y conectando una computadora directamente al NIC 0, se puede ingresar poniendo la IP en la URL del navegador, iniciando con usuario root y contraseña configurada durante el proceso de instalación, nos encontramos en la página de inicial. En esta página podemos ver información sobre los componentes del servidor.
+Habiendo ya configurado una IP, y conectando una computadora directamente al NIC 0, se pudo ingresar poniendo la IP en la URL del navegador, iniciando con usuario root y contraseña configurada durante el proceso de instalación, accediendo a la página inicial. En esta página se pudo ver información sobre los componentes del servidor. % revisar
 
 \begin{figure}[H]
     \centering
@@ -37,13 +37,13 @@ Habiendo ya configurado una IP, y conectando una computadora directamente al NIC
     \label{fig:componentes_server}
 \end{figure}
 
-Teniendo ya nuestro virtualizador, empezamos con configuraciones generales, antes de empezar con las VMs.
+Teniendo ya el virtualizador, se comenzó con configuraciones generales, antes de empezar con las VMs. % revisar
 
-Se habilita la opción que permite seleccionar VMs para que se prendan solas cuando el servidor se prenda, para ello nos dirigimos a  \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Inicio automático} y lo habilitamos con un retraso de 120 segundos al iniciar.
+Se habilitó la opción que permite seleccionar VMs para que se enciendan automáticamente cuando el servidor se encienda, para ello se accedió a \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Inicio automático} y se habilitó con un retraso de 120 segundos al iniciar. % revisar
 
-Desde allí le asignamos la licencia para poder hacer uso de todas las opciones del sistema desde \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Licencias $\rightarrow{}$ Asignar licencia}
+Desde allí se asignó la licencia para poder hacer uso de todas las opciones del sistema desde \texttt{Host $\rightarrow{}$ Administrar $\rightarrow{}$ Licencias $\rightarrow{}$ Asignar licencia} % revisar
 
-Ahora vamos a hacer los preparativos para poder cumplir con la topología de red. Para ello vamos a \texttt{Redes $\rightarrow{}$ Conmutadores virtuales $\rightarrow{}$ Agregar conmutador virtual estándar}. Aquí se crean dos switch virtuales, ligando cada uno de uno de los NIC físicos del equipo.
+A continuación se realizaron los preparativos para poder cumplir con la topología de red. Para ello se accedió a \texttt{Redes $\rightarrow{}$ Conmutadores virtuales $\rightarrow{}$ Agregar conmutador virtual estándar}. Allí se crearon dos switch virtuales, ligando cada uno a uno de los NIC físicos del equipo. % revisar
 
 \begin{figure}[H]
     \centering
@@ -52,7 +52,7 @@ Ahora vamos a hacer los preparativos para poder cumplir con la topología de red
     \label{fig:vSwitches}
 \end{figure}
 
-A continuación, en \texttt{Redes $\rightarrow{}$ Grupos de puertos $\rightarrow{}$ Agregar grupos de puertos} se crean las VLANs asignándolas al switch virtual correspondiente.
+A continuación, en \texttt{Redes $\rightarrow{}$ Grupos de puertos $\rightarrow{}$ Agregar grupos de puertos} se crearon las VLANs asignándolas al switch virtual correspondiente.
 
 \begin{figure}[H]
     \centering
@@ -61,9 +61,9 @@ A continuación, en \texttt{Redes $\rightarrow{}$ Grupos de puertos $\rightarrow
     \label{fig:grupo_puertos}
 \end{figure}
 
-Como último paso en la preparación previa a la creación de las VMs, se sube la imagen del Ubuntu Server 20.04\cite{Ubuntu_20.04_download} a utilizar en \texttt{Almacenamiento $\rightarrow{}$ datastore1 $\rightarrow{}$ Explorador de almacenes de datos $\rightarrow{}$ Cargar}.
+Como último paso en la preparación previa a la creación de las VMs, se subió la imagen del \textit{Ubuntu Server} 20.04\cite{Ubuntu_20.04_download} a utilizar en \texttt{Almacenamiento $\rightarrow{}$ datastore1 $\rightarrow{}$ Explorador de almacenes de datos $\rightarrow{}$ Cargar}. % revisar
 
-Ahora que tenemos todo el escenario preparado, en \texttt{Maquinas virtuales $\rightarrow{}$ Crear/Registrar máquina virtual} podremos crear nuestras VMs.
+Una vez que se tuvo todo el escenario preparado, en \texttt{Máquinas virtuales $\rightarrow{}$ Crear/Registrar máquina virtual} se pudieron crear las VMs. % revisar
 Las 3 VMs fueron creadas de la misma forma:
 \begin{itemize}
     \item \textbf{Seleccionar tipo de creación}
@@ -85,18 +85,18 @@ Las 3 VMs fueron creadas de la misma forma:
     \begin{itemize}
         \item CPU $\rightarrow{}$ Capacidad de procesamiento
         \begin{itemize}
-            \item A todas las VMs se les asigna 2 vCPU.
+            \item A todas las VMs se les asignó 2 vCPU. % revisar
         \end{itemize}
         \item Memoria $\rightarrow{}$ Memoria tipo RAM
         \begin{itemize}
-            \item La memoria es el recurso más escaso del servidor, por lo que debemos asignar responsablemente sus recursos
-            \item A la VM Bastion y destino1 se les asigna 1GB, dado que solamente recibiran solicitudes de acceso.
-            \item A la VM de EJBCA se le asigna 2GB, ya que necesita \href{https://hub.docker.com/r/keyfactor/ejbca-ce#:~:text=Minimum%20System%20Requirements,at%20least%201GB%20of%20RAM}{1GB para correr el contenedor}, y se le asigna 1GB extra para el servicio de autenticación.
+            \item La memoria era el recurso más escaso del servidor, por lo que se debió asignar responsablemente sus recursos % revisar
+            \item A la VM \textit{Bastion} y \textit{destino1} se les asignó 1GB, dado que solamente recibirían solicitudes de acceso. % revisar
+            \item A la VM de \textit{EJBCA} se le asignó 2GB, ya que necesita \href{https://hub.docker.com/r/keyfactor/ejbca-ce#:~:text=Minimum%20System%20Requirements,at%20least%201GB%20of%20RAM}{1GB para correr el contenedor}, y se le asignó 1GB extra para el servicio de autenticación. % revisar
             \item Es importante destacar que estos valores son los valores mínimos para nuestro laboratorio de pruebas, pero no representa los requerimientos reales de implementar una solución semejante.
         \end{itemize}
         \item Disco duro 1 $\rightarrow{}$ Espacio total
         \begin{itemize}
-            \item A todas las VMs se les asigna 35GB.
+            \item A todas las VMs se les asignó 35GB. % revisar
         \end{itemize}
         \item Adaptador de red 1 $\rightarrow{}$ Grupos de puertos
         \item Unidad de CD/DVD 1 $\rightarrow{}$ Archivo ISO del almacén de datos $\rightarrow{}$ Imagen Ubuntu Server.
@@ -104,7 +104,7 @@ Las 3 VMs fueron creadas de la misma forma:
     \item \textbf{Finalizar}
 \end{itemize}
 
-Al terminar con esta tarea, las 3 VMs fueron creadas, al seleccionarlas en Maquinas virtuales, se abre la información detallada de cada una.
+Al terminar con esta tarea, las 3 VMs fueron creadas, al seleccionarlas en Máquinas virtuales, se abrió la información detallada de cada una. % revisar
 
 \begin{figure}[H]
     \centering
@@ -113,21 +113,21 @@ Al terminar con esta tarea, las 3 VMs fueron creadas, al seleccionarlas en Maqui
     \label{fig:vms}
 \end{figure}
 
-En este punto, ya podemos prender las VMs, y configurarlas haciendo uso de la consola que nos mostrará en su página dedicada. Adicionalmente se toma la precaución de habilitar el inicio automático en caso de reinicio seleccionando \texttt{Acciones $\rightarrow{}$ Inicio automático $\rightarrow{}$ Habilitar}.
+En este punto, ya se pudieron encender las VMs, y configurarlas haciendo uso de la consola que se mostró en su página dedicada. Adicionalmente se tomó la precaución de habilitar el inicio automático en caso de reinicio seleccionando \texttt{Acciones $\rightarrow{}$ Inicio automático $\rightarrow{}$ Habilitar}. % revisar
 
 
-Para instalar Ubuntu sobre las VMs, se puede seguir un procedimiento estándar\cite{instalar_ubuntu}, teniendo en consideración:
+Para instalar \textit{Ubuntu} sobre las VMs, se pudo seguir un procedimiento estándar\cite{instalar_ubuntu}, teniendo en consideración: % revisar
 \begin{itemize}
-    \item En la página dedicada a cada VM donde encontramos la consola, también podemos encontrar en \textit{Configuración de hardware} los adaptadores de red asignados, y el expandirlos, nos muestra la MAC de cada uno.
-    \item Haciendo uso de la MAC de cada interfaz de red, en la etapa de configuración de redes se puede configurar las distintas redes según se detalló en Topología de Red \ref{sec:topología_de_red}
-    \item Se hace uso del disco entero, sin usar LVM ni RAID.
-    \item Se utiliza la opción de instalar OpenSSH durante la instalación del SO.
-    \item No se hace uso de la opción de instalar paquetes adicionales.
+    \item En la página dedicada a cada VM donde se encontró la consola, también se pudo encontrar en \textit{Configuración de hardware} los adaptadores de red asignados, y al expandirlos, se mostró la MAC de cada uno. % revisar
+    \item Haciendo uso de la MAC de cada interfaz de red, en la etapa de configuración de redes se pudieron configurar las distintas redes según se detalló en Topología de Red \ref{sec:topología_de_red} % revisar
+    \item Se hizo uso del disco entero, sin usar LVM ni RAID. % revisar
+    \item Se utilizó la opción de instalar \textit{OpenSSH} durante la instalación del SO. % revisar
+    \item No se hizo uso de la opción de instalar paquetes adicionales. % revisar
 \end{itemize}
 
 \subsection{Conclusión}
 
-Al finalizar con esta iteración, contamos con un servidor Dell con SO VMware ESXi 6.7, donde se han configurados dos switch virtuales con distintas VLANs en las mismas, y 3 VMs con SO Ubuntu Server 20.04, con inicio automático configurado.
+Al finalizar con esta iteración, se contó con un servidor \textit{Dell} con SO \textit{VMware ESXi} 6.7, donde se configuraron dos switch virtuales con distintas VLANs en los mismos, y 3 VMs con SO \textit{Ubuntu Server} 20.04, con inicio automático configurado. % revisar
 
 Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguiente forma:
 
@@ -150,7 +150,7 @@ Habiendo realizado estas tareas, se cumplió con los requerimientos de la siguie
     \end{itemize}
     \item \textbf{REQ\_NF\_9:}
     \begin{itemize}
-        \item Se esta haciendo uso de un servidor, el cual esta por definición preparado para funcionar constantemente sin interrupción\cite{server_vs_pc}, y haciendo uso de la opción de inicio automático, se ha preparado al sistema para otorgar la mayor disponibilidad a nuestra disposición.
+        \item Se hizo uso de un servidor, el cual está por definición preparado para funcionar constantemente sin interrupción\cite{server_vs_pc}, y haciendo uso de la opción de inicio automático, se preparó al sistema para otorgar la mayor disponibilidad disponible. % revisar
     \end{itemize}
     \item \textbf{REQ\_NF\_13:}
     \begin{itemize}
@@ -169,7 +169,7 @@ Al comenzar esta iteración, contamos con una VM con SO Ubuntu 20.04, dentro del
 
 \subsubsection{Instalación Docker}
 
-Para empezar esta iteración, arrancamos realizando la instalación de Docker y Docker-Compose:
+Para empezar esta iteración, se comenzó realizando la instalación de \textit{Docker} y \textit{Docker-Compose}: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Install Docker}, label={cod:Install_docker}, captionpos=b]
 sudo apt-get update
@@ -197,15 +197,15 @@ sudo systemctl enable containerd.service
 \subsubsection{Instalación y Configuración de SoftHSM}
 \label{sec:softhsm_install}
 
-En este servidor no se instalo de manera local SoftHSM, sin embargo nos fue necesario el conocer como instalarlo y usarlo, para luego poderlo sincronizar con EJBCA, y a su vez para investigar su posible uso del lado del técnico.
+En este servidor no se instaló de manera local \textit{SoftHSM}, sin embargo fue necesario conocer cómo instalarlo y usarlo, para luego poder sincronizarlo con \textit{EJBCA}, y a su vez para investigar su posible uso del lado del técnico. % revisar
 
-Para instalar SoftHSM, se puede realizarlo con:
+Para instalar \textit{SoftHSM}, se pudo realizar con: % revisar
 \begin{lstlisting}[language=Bash, caption={Instalación SoftHSM}, label={cod:bash0}, captionpos=b]
 sudo apt-get install softhsm2
 \end{lstlisting}
 
 
-El paquete de Ubuntu para SoftHSM2 no siempre se inicializa correctamente (según la versión del SO), por lo que es posible que se deban crear directorios faltantes, etc. También pueden existir problemas con permisos, por ello se presentan los siguientes pasos, siendo el último el único obligatorio, que es el comando con el que se inicia un slot:
+El paquete de \textit{Ubuntu} para \textit{SoftHSM2} no siempre se inicializa correctamente (según la versión del SO), por lo que fue posible que se debieran crear directorios faltantes, etc. También pudieron existir problemas con permisos, por ello se presentaron los siguientes pasos, siendo el último el único obligatorio, que es el comando con el que se inicia un slot: % revisar
 \begin{lstlisting}[language=Bash, caption={Siguientes pasos}, label={cod:bash1}, captionpos=b]
 sudo mkdir /var/lib/softhsm/tokens #Probablemente este ya este creado y no haga falta
 sudo chmod a+rwx /var/lib/softhsm
@@ -215,7 +215,7 @@ sudo chmod a+r /etc/softhsm/*
 softhsm2-util --init-token --free --label {NAME}
 \end{lstlisting}
 
-Reemplazando donde dice \textbf{NAME} por el nombre que se considere oportuno asignar:
+Reemplazando donde dice \textbf{NAME} por el nombre que se consideró oportuno asignar: % revisar
 
 \begin{figure}[H]
     \centering
@@ -224,8 +224,8 @@ Reemplazando donde dice \textbf{NAME} por el nombre que se considere oportuno as
     \label{fig:instalacion_SoftHSM}
 \end{figure}
 
-En la imagen se puede observar como solicita insertar la contraseña del usuario del sistema y luego pide establecer un PIN que será la contraseña del slot. Tanto el LABEL como el PIN son de importancia para la manipulación del SoftSHM.
-Para comprobar los slots creados, se pueden chequear con:
+En la imagen se puede observar cómo solicitó insertar la contraseña del usuario del sistema y luego pidió establecer un PIN que fue la contraseña del slot. Tanto el LABEL como el PIN fueron de importancia para la manipulación del \textit{SoftHSM}. % revisar
+Para comprobar los slots creados, se pudieron verificar con: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Comando para ver slots creados}, label={cod:show_slots}, captionpos=b]
 softhsm2-util --show-slots
@@ -239,27 +239,27 @@ softhsm2-util --show-slots
 \end{figure}
 
 
-En caso de tener problemas con la instalación manual, también existen alternativas, por ejemplo repositorios \href{https://github.com/sungsu-cho/softhsm-install}{GitHub}, donde la instalación esta resuelta (En este caso, junto a OpenSSL), o similares.
+En caso de tener problemas con la instalación manual, también existieron alternativas, por ejemplo repositorios \href{https://github.com/sungsu-cho/softhsm-install}{\textit{GitHub}}, donde la instalación está resuelta (en este caso, junto a \textit{OpenSSL}), o similares. % revisar
 
 
 \subsubsection{Instalación de EJBCA con Docker y SoftHSM}
 \label{sec:instalacion_ejbca_cocker_softhsm}
 
-Anteriormente se mencionó que para levantar el servicio de EJBCA, se tomo la decisión de utilizar el Docker ofrecido en su versión gratuita por Bitnami, y si bien existe la posibilidad de utilizar las versiones estables en DockerHub, se eligió descargar el \href{https://github.com/bitnami/containers/tree/main/bitnami/ejbca}{repositorio oficial} que se pudo encontrar abierto en Github, esto fue hecho para poder realizar modificaciones.
+Anteriormente se mencionó que para levantar el servicio de \textit{EJBCA}, se tomó la decisión de utilizar el \textit{Docker} ofrecido en su versión gratuita por \textit{Bitnami}, y si bien existía la posibilidad de utilizar las versiones estables en \textit{DockerHub}, se eligió descargar el \href{https://github.com/bitnami/containers/tree/main/bitnami/ejbca}{repositorio oficial} que se pudo encontrar abierto en \textit{GitHub}, esto se hizo para poder realizar modificaciones. % revisar
 
-Por lo tanto, dentro de nuestra carpeta \texttt{/home/ejbca} descargamos el repositorio, y dentro de \texttt{/xx/8/debian-12} nos encontramos con su \textit{Dockerfile} y \textit{docker-compose}.
+Por lo tanto, dentro de la carpeta \texttt{/home/ejbca} se descargó el repositorio, y dentro de \texttt{/xx/8/debian-12} se encontró su \textit{Dockerfile} y \textit{docker-compose}. % revisar
 
-En el \textit{docker-compose} podemos ver como incluye la imagen de la base de datos \textit{MariaDB} y la imagen de \textit{EJBCA}, por lo que para incluir SoftHSM se nos presentan 3 opciones:
+En el \textit{docker-compose} se pudo ver cómo incluye la imagen de la base de datos \textit{MariaDB} y la imagen de \textit{EJBCA}, por lo que para incluir \textit{SoftHSM} se presentaron 3 opciones: % revisar
 
 \begin{enumerate}
-    \item Realizar una tercera imagen con SoftHSM instalado, y comunicarla con la imagen de EJBCA mediante volúmenes compartidos.
-    \item Tener SoftHSM instalado de manera local, y comunicarlo con el contenedor para su uso.
-    \item Instalar SoftHSM en la misma imagen de EJBCA
+    \item Realizar una tercera imagen con \textit{SoftHSM} instalado, y comunicarla con la imagen de \textit{EJBCA} mediante volúmenes compartidos.
+    \item Tener \textit{SoftHSM} instalado de manera local, y comunicarlo con el contenedor para su uso.
+    \item Instalar \textit{SoftHSM} en la misma imagen de \textit{EJBCA}
 \end{enumerate}
 
-Con respecto a las primeras dos opciones, nos encontramos con el detalle de que EJBCA solo permite hacer uso del SoftHSM si el mismo se encuentra instalado en el mismo usuario, lo que se presenta como un impedimento, que fue resuelto ya por Bitnami en su versión paga, por lo que se descartó dicha opción.
+Con respecto a las primeras dos opciones, se encontró el detalle de que \textit{EJBCA} solo permitía hacer uso del \textit{SoftHSM} si el mismo se encontraba instalado en el mismo usuario, lo que se presentó como un impedimento, que fue resuelto ya por \textit{Bitnami} en su versión paga, por lo que se descartó dicha opción. % revisar
 
-Justificando de esta manera el haber descargado el repositorio, optamos por la tercera opción, y modificamos el \textit{Dockerfile}, agregando sobre el final las siguientes lineas:
+Justificando de esta manera el haber descargado el repositorio, se optó por la tercera opción, y se modificó el \textit{Dockerfile}, agregando sobre el final las siguientes líneas: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Instalacion SoftHSM en Docker}, label={cod:softhsm_docker}, captionpos=b]
 RUN apt-get update && apt-get upgrade -y \
@@ -280,13 +280,13 @@ USER 1001
 RUN softhsm2-util --init-token --free --label "SoftHSM Slot 1" --pin ejbca --so-pin ejbca
 \end{lstlisting}
 
-Y de esta manera, al levantar el contenedor, se instaló también dentro del mismo SoftHSM (haciendo uso de un comprimido con un \textit{Makefile} con los pasos necesarios) y es posible desde la interfaz de EJBCA acceder al slot creado.
+Y de esta manera, al levantar el contenedor, se instaló también dentro del mismo \textit{SoftHSM} (haciendo uso de un comprimido con un \textit{Makefile} con los pasos necesarios) y fue posible desde la interfaz de \textit{EJBCA} acceder al slot creado. % revisar
 
-Volviendo al \textit{docker-compose}, el mismo debe ser modificado también. 
+Volviendo al \textit{docker-compose}, el mismo debió ser modificado también. % revisar 
 
-Primero, en las variables de ambiente, tanto para \textit{MariaDB} como EJBCA, se presentan opciones de personalización tales como usuario y contraseña, que fuera de un entorno de investigación deberían ser modificados y ocultados.
+Primero, en las variables de ambiente, tanto para \textit{MariaDB} como \textit{EJBCA}, se presentaron opciones de personalización tales como usuario y contraseña, que fuera de un entorno de investigación deberían haber sido modificadas y ocultadas. % revisar
 
-A continuación se puede notar que la imagen de EJBCA que utiliza es la que se encuentra en \textit{DockerHub}, por lo tanto se cambia la linea para que utilice el \textit{Dockerfile} recientemente modificado, de forma que:
+A continuación se pudo notar que la imagen de \textit{EJBCA} que utilizaba era la que se encontraba en \textit{DockerHub}, por lo tanto se cambió la línea para que utilizara el \textit{Dockerfile} recientemente modificado, de forma que: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Docker-Compose usando EJBCA de DockerHub}, label={ejbca_dockerhub}, captionpos=b]
 ejbca:
@@ -302,13 +302,13 @@ ejbca:
         dockerfile: Dockerfile
 \end{lstlisting}
 
-Adicionalmente, para asegurarnos de que ante un reinicio de sistema, los contenedores \href{https://www.baeldung.com/ops/docker-containers-start-automatically}{reinicien automáticamente}, se agrega al final tanto de la descripción de \textit{MariaDB} como de EJBCA:
+Adicionalmente, para asegurarse de que ante un reinicio de sistema, los contenedores \href{https://www.baeldung.com/ops/docker-containers-start-automatically}{reiniciaran automáticamente}, se agregó al final tanto de la descripción de \textit{MariaDB} como de \textit{EJBCA}: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Reinicio automatico de Docker}, label={cod:restart_always}, captionpos=b]
 restart: always
 \end{lstlisting}
 
-Con todo ya preparado para iniciar los contenedores, y utilizando un Dockerfile en lugar de una imagen de DockerHub, ubicados en la carpeta con ambos archivos, se utilizan dos comandos:
+Con todo ya preparado para iniciar los contenedores, y utilizando un \textit{Dockerfile} en lugar de una imagen de \textit{DockerHub}, ubicados en la carpeta con ambos archivos, se utilizaron dos comandos: % revisar
 
 \begin{lstlisting}[language=Bash, caption={Iniciar docker-compose con SoftHSM por primera vez}, label={cod:Iniciar_docker-compose_con_SoftHSM_por_primera_vez}, captionpos=b]
 #Solamente la primera vez
@@ -320,9 +320,9 @@ docker-compose up -d
 
 \subsubsection{Acceso a EJBCA}
 
-En este punto, se habilitó para configurar y operar el EJBCA una página web, para poder acceder a ella, se podría conectar al servidor mediante un tunel, o configurar en la VLAN 5 otra salida fuera del servidor para tener acceso vía LAN, sin embargo aprovecharemos la conexión temporal que le permite acceder a internet, que se encuentra en la misma red que nuestros equipos, para ser más precisos, la IP 172.18.66.221.
+En este punto, se habilitó para configurar y operar \textit{EJBCA} una página web, para poder acceder a ella, se podría haber conectado al servidor mediante un túnel, o configurar en la VLAN 5 otra salida fuera del servidor para tener acceso vía LAN, sin embargo se aprovechó la conexión temporal que le permitía acceder a internet, que se encontraba en la misma red que los equipos, para ser más precisos, la IP \texttt{172.18.66.221}. % revisar
 
-Empezamos descargando el certificado de administrador que nos permitirá acceder a la admin web donde realizar las configuraciones necesarias. Para ello accedemos a \texttt{https://172.18.66.221:8443/ejbca/ra/enrollwithusername.xhtml}, y como se puede observar en la imagen \ref{fig:superadmin_enroll} nos pide credenciales.
+Se comenzó descargando el certificado de administrador que permitiría acceder a la admin web donde realizar las configuraciones necesarias. Para ello se accedió a \texttt{https://172.18.66.221:8443/ejbca/ra/enrollwithusername.xhtml}, y como se puede observar en la imagen \ref{fig:superadmin_enroll} pidió credenciales. % revisar
 
 \begin{figure}[H]
     \centering
@@ -331,11 +331,11 @@ Empezamos descargando el certificado de administrador que nos permitirá acceder
     \label{fig:superadmin_enroll}
 \end{figure}
 
-Como no cambiamos en el Docker-Compose las credenciales por defecto, las ingresamos en este punto siendo \textit{superadmin} de usuario, y \textit{Bitnami1234} de contraseña.
-A continuación nos pregunta el algoritmo deseado para el certificado, seleccionamos RSA-2048, y finalmente la opción para descargar el PKCS\#12.
+Como no se cambiaron en el \textit{Docker-Compose} las credenciales por defecto, se ingresaron en este punto siendo \textit{superadmin} de usuario, y \textit{Bitnami1234} de contraseña. % revisar
+A continuación preguntó el algoritmo deseado para el certificado, se seleccionó RSA-2048, y finalmente la opción para descargar el PKCS\#12. % revisar
 
-Con eso se habrá descargado un archivo de extensión \texttt{.p12}.
-Este archivo es el certificado del \textit{superadmin} que tendremos que ingresar en nuestro navegador. Para hacerlo en Firefox:
+Con eso se descargó un archivo de extensión \texttt{.p12}. % revisar
+Este archivo fue el certificado del \textit{superadmin} que se tuvo que ingresar en el navegador. Para hacerlo en \textit{Firefox}: % revisar
 
 \begin{enumerate}
     \item En el menú de Firefox entrar a \textit{Preferencias}.
@@ -355,7 +355,7 @@ Este archivo es el certificado del \textit{superadmin} que tendremos que ingresa
     
 \end{enumerate}
 
-En el navegador pondremos la URL \texttt{https://172.18.66.221:8443/ejbca/adminweb/} y habremos podido acceder a la pagina de administración, donde tenemos a nuestro alcance todas las opciones de configuración para configurar un PKI y poder emitir certificados.
+En el navegador se puso la URL \texttt{https://172.18.66.221:8443/ejbca/adminweb/} y se pudo acceder a la página de administración, donde se tuvieron al alcance todas las opciones de configuración para configurar un PKI y poder emitir certificados. % revisar
 
 \begin{figure}[htp]
     \centering
