@@ -51,8 +51,6 @@ def authenticate(serial_id, username):
 
 
 # Funciones relacionadas con PAM
-DEFAULT_USER_ID = "abc_sebas"
-
 
 def pam_sm_authenticate(pamh, flags, argv):
     try:
@@ -148,8 +146,3 @@ def pam_sm_close_session(pamh, flags, argv):
 def pam_sm_chauthtok(pamh, flags, argv):
     return pamh.PAM_SUCCESS
 
-
-if __name__ == "__main__":
-    # Prueba simple de la llamada al servidor de autenticación
-    result = authenticate("1eb97febf0e01bb7f1891cbd837087af3064740b", "test_user")
-    print("Resultado de autenticación: %s" % result)

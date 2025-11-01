@@ -12,3 +12,4 @@ certificates/
 *.bkp
 .structurizr
 documentation/dsl/workspace.json
+*.log
